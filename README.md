@@ -8,7 +8,8 @@
 
 > [!NOTE]  
 > This tool is under development.
-> I tested it on the following big charts, and it didn't break something (all unittests passed after formatter changes):
+> I tested it on the multiple big charts, and it didn't break anything.
+> Example of charts which I used for testing:
 >
 > https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack (175 templates)
 > 
