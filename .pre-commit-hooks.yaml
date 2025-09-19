@@ -3,4 +3,6 @@
   description: Runs formatter for helm charts templates code before committing
   entry: helmfmt
   language: golang
-  types_or: [yaml, yml, tpl]
+  types: [file]
+  files: \.(yaml|yml|tpl)$
+
