@@ -11,6 +11,7 @@
 > I tested it on the following big charts, and it didn't break something (all unittests passed after formatter changes):
 >
 > https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack (175 templates)
+> 
 > https://github.com/VictoriaMetrics/helm-charts/tree/master/charts/victoria-logs-cluster (14 templates)
 > 
 > But I don't guarantee that it would work for all cases.
