@@ -1,8 +1,7 @@
 - id: helmfmt
   name: helmfmt
   description: Runs formatter for helm charts templates code before committing
-  entry: helmfmt
+  entry: helmfmt --files
   language: golang
   types: [file]
-  files: \.(yaml|yml|tpl)$
-
+  files: templates/.*\.(yaml|yml|tpl)$
