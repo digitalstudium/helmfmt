@@ -8,8 +8,6 @@ import (
 	"strings"
 )
 
-const indentStep = 2 // Number of spaces per indentation level
-
 func main() {
 	// Check command line arguments
 	if len(os.Args) != 2 {

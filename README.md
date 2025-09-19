@@ -43,7 +43,7 @@ Supported:
 - Control blocks: `if`, `range`, `with`, `define`, `block`
 - Branching: `else`, `else if`, `end`
 - Vars: `{{ $var := ... }}`
-- Simple functions: `include`, `fail`, `toYaml`, `printf`
+- Simple functions: `include`, `fail`, `printf` etc.
 - Block comments: `{{/* ... */}}`
 
 ---

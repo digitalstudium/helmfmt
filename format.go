@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+const indentStep = 2 // Number of spaces per indentation level
+
 // Типы токенов для ясности, что мы нашли
 type tokenKind int
 
@@ -14,23 +16,23 @@ const (
 	tokElse                    // else/else if
 	tokEnd                     // end
 	tokVar                     // {{ $var ... }}
-	tokSimple                  // include, fail, toYaml и другие простые функции
+	tokSimple                  // include, fail, printf и другие простые функции
 	tokControlInline           // управляющая конструкция с end в той же строке
 )
 
 var (
 	// Основные паттерны для парсинга тегов
 	tagOpenRe     = regexp.MustCompile(`^\s*\{\{(-?)(\s*)`)
-	commentOpenRe = regexp.MustCompile(`^\s*\{\{(-?)(\s*)/\*`)
-	commentEndRe  = regexp.MustCompile(`\*/\}\}`)
-	tagEndRe      = regexp.MustCompile(`(-?)\}\}`)
+	commentOpenRe = regexp.MustCompile(`^\s*(\{\{\/\*|\{\{- \/\*)`)
+	commentEndRe  = regexp.MustCompile(`\*\/(?:}}| -}})`)
+	tagEndRe      = regexp.MustCompile(`\s+(-?)\}\}|\}\}`)
 
 	// Паттерны для определения типов токенов
 	varRe       = regexp.MustCompile(`^\s*\$`)
 	controlRe   = regexp.MustCompile(`^\s*(if|range|with|define|block)\b`)
 	elseRe      = regexp.MustCompile(`^\s*else\b`)
 	endRe       = regexp.MustCompile(`^\s*end\b`)
-	simpleRe    = regexp.MustCompile(`^\s*(include|fail|toYaml|printf)\b`)
+	simpleRe    = regexp.MustCompile(`^\s*(include|fail|printf)\b`)
 	endInLineRe = regexp.MustCompile(`\{\{(-?)(\s*)end\b[^}]*(-?)\}\}`)
 
 	// Для извлечения первого слова
