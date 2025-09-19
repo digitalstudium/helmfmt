@@ -8,13 +8,63 @@
 
 ---
 
-## Install
+## Example
 
-- Requires Go 1.22+
-- Run:
-  ```bash
-  go install github.com/digitalstudium/helmfmt@latest
-  ```
+**Before**
+
+```gotmpl
+{{ if .Values.enabled }}
+{{ if .Values.debug }}
+{{ $replicas := .Values.replicas }}
+{{ include "chart.labels" . }}
+{{ end }}
+{{ end }}
+```
+
+**After**
+
+```gotmpl
+{{ if .Values.enabled }}
+  {{ if .Values.debug }}
+    {{ $replicas := .Values.replicas }}
+    {{ include "chart.labels" . }}
+  {{ end }}
+{{ end }}
+```
+
+## Installation
+
+### First method
+
+```bash
+go install github.com/digitalstudium/helmfmt@latest
+```
+
+Then you should add `$HOME/go/bin/` to PATH if not already done:
+
+```bash
+echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.bashrc && source ~/.bashrc
+```
+
+### Second method
+
+```bash
+git clone https://github.com/digitalstudium/helmfmt
+cd helmfmt
+go build
+```
+
+If you compiled it via `go build` then you can run it with:
+
+```bash
+./helmfmt <chart-path>
+```
+
+or add it to PATH via:
+
+```bash
+sudo install ./helmfmt /usr/local/bin/
+```
 
 ---
 
@@ -48,49 +98,12 @@ Supported:
 
 ---
 
-## Examples
-
-**Before**
-
-```gotmpl
-{{ if .Values.enabled }}
-{{ if .Values.debug }}
-{{ $replicas := .Values.replicas }}
-{{ include "chart.labels" . }}
-{{ end }}
-{{ end }}
-```
-
-**After**
-
-```gotmpl
-{{ if .Values.enabled }}
-  {{ if .Values.debug }}
-    {{ $replicas := .Values.replicas }}
-    {{ include "chart.labels" . }}
-  {{ end }}
-{{ end }}
-```
-
----
-
 ## Roadmap
 
 - Check-only / diff mode
 - More Helm funcs (tpl, dict, etc.)
 - Golden tests/examples
 - Optional YAML alignment around tags
-
----
-
-## Build from source
-
-```bash
-git clone https://github.com/digitalstudium/helmfmt
-cd helmfmt
-go build -o helmfmt
-./helmfmt <chart-path>
-```
 
 ---
 
