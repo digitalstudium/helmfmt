@@ -6,15 +6,15 @@
 - Output: rewritten only if indentation changed
 - Indent: 2 spaces
 
-> [!NOTE]  
+> [!NOTE]
 > This tool is under development.
 > I tested it on the multiple big charts, and it didn't break anything.
 > Example of charts which I used for testing:
 >
 > https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack (175 templates)
-> 
+>
 > https://github.com/VictoriaMetrics/helm-charts/tree/master/charts/victoria-logs-cluster (14 templates)
-> 
+>
 > But I don't guarantee that it would work for all cases.
 
 ---
@@ -110,6 +110,20 @@ Supported:
 - Vars: `{{ $var := ... }}`
 - Simple functions: `include`, `fail`, `printf` etc.
 - Block comments: `{{/* ... */}}`
+
+---
+
+## pre-commit hook configuration
+
+To use `helmfmt` as a pre-commit hook, add the following to your `.pre-commit-config.yaml`:
+
+```yaml
+repos:
+  - repo: https://github.com/digitalstudium/helmfmt
+    rev: v0.0.3
+    hooks:
+      - id: helmfmt
+```
 
 ---
 
