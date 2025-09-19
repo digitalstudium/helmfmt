@@ -140,10 +140,8 @@ func parseTokenFromLine(lines []string, lineIdx int, line string) (keyword strin
 	// Проверяем тип токена
 	switch {
 	case varRe.MatchString(content):
-		if _, ok := findTagEndInSameLine(line); ok {
-			return "$", lineIdx, lineIdx, tokVar, true
-		}
-		return "", lineIdx, lineIdx, tokNone, false
+		end := findTagEndMultiline(lines, lineIdx, line)
+		return "$", lineIdx, end, tokVar, true
 
 	case controlRe.MatchString(content):
 		matches := controlRe.FindStringSubmatch(content)
@@ -163,19 +161,15 @@ func parseTokenFromLine(lines []string, lineIdx int, line string) (keyword strin
 		return "else", lineIdx, end, tokElse, true
 
 	case endRe.MatchString(content):
-		if _, ok := findTagEndInSameLine(line); ok {
-			return "end", lineIdx, lineIdx, tokEnd, true
-		}
-		return "", lineIdx, lineIdx, tokNone, false
+		end := findTagEndMultiline(lines, lineIdx, line)
+		return "end", lineIdx, end, tokEnd, true
 
 	case simpleRe.MatchString(content):
 		matches := simpleRe.FindStringSubmatch(content)
 		keyword := matches[1]
 
-		if _, ok := findTagEndInSameLine(line); ok {
-			return keyword, lineIdx, lineIdx, tokSimple, true
-		}
-		return "", lineIdx, lineIdx, tokNone, false
+		end := findTagEndMultiline(lines, lineIdx, line)
+		return keyword, lineIdx, end, tokSimple, true
 	}
 
 	return "", lineIdx, lineIdx, tokNone, false
@@ -199,11 +193,6 @@ func skipLeadingBlockComment(lines []string, start int) (endLine int, remainder 
 		}
 	}
 	return start, "", false
-}
-
-// Поиск закрытия тега в той же строке
-func findTagEndInSameLine(line string) (bool, bool) {
-	return tagEndRe.MatchString(line), true
 }
 
 // Поиск закрытия тега с возможностью многострочности

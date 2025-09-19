@@ -2,7 +2,7 @@
 
 `helmfmt` is a small CLI to auto-align indentation in Helm templates. It walks chart templates recursively and normalizes indentation for control blocks, variables, and simple functions, while respecting comments.
 
-- Input: `.yaml`, `.yml`, `.tpl` in `chart/templates/`
+- Input: `.yaml`, `.yml`, `.tpl` in `templates` folder of chart
 - Output: rewritten only if indentation changed
 - Indent: 2 spaces
 
