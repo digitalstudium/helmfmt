@@ -98,14 +98,23 @@ Download it from [releases](https://github.com/digitalstudium/helmfmt/releases) 
 
 ```bash
 helmfmt <chart-path>
+helmfmt --files <file1> <file2> ...
 ```
 
 Example run:
 
-```
+```bash
 helmfmt ./mychart
 [UPDATED] mychart/templates/deployment.yaml
 Processed: 3, Updated: 1, Errors: 0
+```
+
+or 
+
+```bash
+helmfmt --files ./mychart/templates/deployment.yaml ./mychart/templates/svc.yaml
+[UPDATED] mychart/templates/deployment.yaml
+Processed: 2, Updated: 1, Errors: 0
 ```
 
 ---
