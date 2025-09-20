@@ -1,6 +1,8 @@
 # helmfmt
 
-`helmfmt` is a small CLI to auto-align indentation in Helm templates. It walks chart templates recursively and normalizes indentation for control blocks, variables, and simple functions, while respecting comments. It can be configured for VSCode/ZED IDE, and as a pre-commit hook
+`helmfmt` is a small CLI to auto-align indentation in Helm templates. It walks chart templates recursively and normalizes indentation for control blocks, variables, and simple functions, while respecting comments.
+
+It can be configured for [Zed IDE](https://github.com/digitalstudium/helmfmt?tab=readme-ov-file#zed-ide-configuration)/[VS Code](https://github.com/digitalstudium/helmfmt?tab=readme-ov-file#vscode-ide-configuration), and as a [pre-commit hook](https://github.com/digitalstudium/helmfmt?tab=readme-ov-file#pre-commit-hook-configuration).
 
 ---
 
@@ -137,7 +139,7 @@ Add these lines to your `settings.json`:
   }
 ```
 
-In addition, you should install helm language extension https://github.com/cabrinha/helm.zed 
+In addition, you should install helm language extension https://github.com/cabrinha/helm.zed
 and helm language server https://github.com/mrjosh/helm-ls
 
 ## VSCode IDE configuration
