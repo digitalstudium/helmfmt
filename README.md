@@ -1,6 +1,6 @@
 # helmfmt
 
-`helmfmt` is a small CLI to auto-align indentation in Helm templates. It walks chart templates recursively and normalizes indentation for control blocks, variables, and simple functions, while respecting comments.
+`helmfmt` is a small CLI to auto-align indentation in Helm templates. It walks chart templates recursively and normalizes indentation for control blocks, variables, and simple functions, while respecting comments. It can be configured for VSCode/ZED IDE, and as a pre-commit hook
 
 ---
 
@@ -26,7 +26,7 @@ Not supported:
 
 **Before**
 
-```gotmpl
+```helm
 {{- if .Values.enabled }}
 {{ range $foobar := .Values.list }}
 {{/*
@@ -40,7 +40,7 @@ a multiline comment
 
 **After**
 
-```gotmpl
+```helm
 {{- if .Values.enabled }}
   {{ range $foobar := .Values.list }}
     {{/*
@@ -120,6 +120,46 @@ repos:
       - id: helmfmt
 ```
 
+## Zed IDE configuration
+
+Add these lines to your `settings.json`:
+
+```json
+  "languages": {
+    "Helm": {
+      "formatter": {
+        "external": {
+          "command": "helmfmt",
+          "arguments": ["--files", "{buffer_path}", "--stdout"]
+        }
+      }
+    }
+  }
+```
+
+In addition, you should install helm language extension https://github.com/cabrinha/helm.zed 
+and helm language server https://github.com/mrjosh/helm-ls
+
+## VSCode IDE configuration
+
+Add these lines to your settings:
+
+```json
+  "advancedLocalFormatters.formatters": [
+    {
+      "command": ["helmfmt", "--files", "$absoluteFilePath", "--stdout"],
+      "languages": ["helm"]
+    }
+  ],
+  "[helm]": {
+    "editor.defaultFormatter": "webfreak.advanced-local-formatters"
+  }
+```
+
+In addition these extensions should be installed:
+https://github.com/WebFreak001/vscode-advanced-local-formatters
+https://github.com/vscode-kubernetes-tools/vscode-kubernetes-tools
+
 ---
 
 ## Roadmap
@@ -127,7 +167,6 @@ repos:
 - Check-only / diff mode
 - More Helm funcs (dict, etc.)
 - Format spaces inside tags
-- Create Zed/VSCode extension
 
 ---
 

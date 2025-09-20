@@ -12,10 +12,13 @@ func main() {
 	args := os.Args[1:]
 
 	if len(args) == 0 {
-		fmt.Fprintf(os.Stderr, "Usage: %s <chart-path> OR %s --files <file1> <file2> ...\n",
+		fmt.Fprintf(os.Stderr, "Usage: %s <chart-path> OR %s --files <file1> <file2> ... [--stdout]\n",
 			filepath.Base(os.Args[0]), filepath.Base(os.Args[0]))
 		os.Exit(2)
 	}
+
+	stdoutMode := false
+	var files []string
 
 	// Check if running in pre-commit mode (processing individual files)
 	if args[0] == "--files" {
@@ -23,7 +26,26 @@ func main() {
 			fmt.Fprintf(os.Stderr, "Error: --files requires at least one file argument\n")
 			os.Exit(2)
 		}
-		processFiles(args[1:])
+
+		// Parse args: support --stdout as last or after --files
+		for i := 1; i < len(args); i++ {
+			if args[i] == "--stdout" {
+				stdoutMode = true
+			} else {
+				files = append(files, args[i])
+			}
+		}
+
+		if len(files) == 0 {
+			fmt.Fprintf(os.Stderr, "Error: --files requires at least one file argument\n")
+			os.Exit(2)
+		}
+
+		if stdoutMode {
+			processFilesStdout(files)
+		} else {
+			processFiles(files)
+		}
 		return
 	}
 
@@ -34,6 +56,40 @@ func main() {
 	}
 
 	processChartDirectory(args[0])
+}
+
+func processFilesStdout(files []string) {
+	for _, file := range files {
+		// Only process YAML and template files
+		if !hasWantedExt(file) {
+			continue
+		}
+
+		// Skip if file doesn't exist or is not in a templates directory
+		if !isHelmTemplate(file) {
+			continue
+		}
+
+		// Read and format file
+		b, err := os.ReadFile(file)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error reading %s: %v\n", file, err)
+			os.Exit(1)
+		}
+
+		content := string(b)
+
+		err = validateTemplateSyntax(content)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Invalid template syntax in %s: %v\n", file, err)
+			os.Exit(1)
+		}
+
+		formatted := formatIndentation(content)
+
+		// Output formatted content to stdout
+		fmt.Print(formatted)
+	}
 }
 
 func processFiles(files []string) {
