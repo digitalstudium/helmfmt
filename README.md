@@ -10,7 +10,7 @@ It can be configured for [Zed IDE](https://github.com/digitalstudium/helmfmt?tab
 
 Only lines starting with Go-template tags. YAML indentation is untouched.
 
-Supported:
+These are indented:
 
 - Control blocks: `range`, `with`, `define`, `block`
 - Branching: `if`, `else`, `else if`, `end`
@@ -18,9 +18,9 @@ Supported:
 - Some functions: `include`, `fail`, `printf` etc.
 - Comments: `{{/* ... */}}`
 
-Not supported:
+These are not indented:
 
-- `tpl` and `toYaml` because it can break YAML indentation
+- `tpl` and `toYaml` because they can break YAML indentation
 
 ---
 
@@ -29,13 +29,17 @@ Not supported:
 **Before**
 
 ```helm
-{{- if .Values.enabled }}
-{{ range $foobar := .Values.list }}
-{{/*
-This is
-a multiline comment
-*/}}
-{{- $var := .Values.someValue }}
+{{- if .Values.createNamespace }}
+{{- range .Values.namespaces }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ . }}
+{{- with $.Values.namespaceLabels }}
+  labels:
+{{ toYaml . | indent 4 }}
+{{- end }}
+---
 {{- end }}
 {{- end }}
 ```
@@ -43,13 +47,17 @@ a multiline comment
 **After**
 
 ```helm
-{{- if .Values.enabled }}
-  {{ range $foobar := .Values.list }}
-    {{/*
-    This is
-    a multiline comment
-    */}}
-    {{- $var := .Values.someValue }}
+{{- if .Values.createNamespace }}
+  {{- range .Values.namespaces }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ . }}
+    {{- with $.Values.namespaceLabels }}
+  labels:
+{{ toYaml . | indent 4 }}
+    {{- end }}
+---
   {{- end }}
 {{- end }}
 ```
@@ -109,7 +117,7 @@ helmfmt ./mychart
 Processed: 3, Updated: 1, Errors: 0
 ```
 
-or 
+or
 
 ```bash
 helmfmt --files ./mychart/templates/deployment.yaml ./mychart/templates/svc.yaml

@@ -1,0 +1,11 @@
+name: "Plain yaml"
+input: |
+  apiVersion: v1
+  kind: Namespace
+  metadata:
+    name: my-namespace
+expected: |
+  apiVersion: v1
+  kind: Namespace
+  metadata:
+    name: my-namespace

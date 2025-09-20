@@ -9,225 +9,146 @@ import (
 )
 
 func main() {
-	args := os.Args[1:]
+	os.Exit(run(os.Args[1:]))
+}
 
+func run(args []string) int {
 	if len(args) == 0 {
-		fmt.Fprintf(os.Stderr, "Usage: %s <chart-path> OR %s --files <file1> <file2> ... [--stdout]\n",
-			filepath.Base(os.Args[0]), filepath.Base(os.Args[0]))
-		os.Exit(2)
+		usage()
+		return 2
 	}
 
-	stdoutMode := false
+	stdout := false
 	var files []string
 
-	// Check if running in pre-commit mode (processing individual files)
+	// Pre-commit/IDE mode: --files <file1> <file2> ... [--stdout]
 	if args[0] == "--files" {
 		if len(args) < 2 {
-			fmt.Fprintf(os.Stderr, "Error: --files requires at least one file argument\n")
-			os.Exit(2)
+			fmt.Fprintln(os.Stderr, "Error: --files requires at least one file argument")
+			return 2
 		}
-
-		// Parse args: support --stdout as last or after --files
-		for i := 1; i < len(args); i++ {
-			if args[i] == "--stdout" {
-				stdoutMode = true
-			} else {
-				files = append(files, args[i])
+		for _, a := range args[1:] {
+			if a == "--stdout" {
+				stdout = true
+				continue
 			}
+			files = append(files, a)
 		}
-
 		if len(files) == 0 {
-			fmt.Fprintf(os.Stderr, "Error: --files requires at least one file argument\n")
-			os.Exit(2)
+			fmt.Fprintln(os.Stderr, "Error: --files requires at least one file argument")
+			return 2
 		}
-
-		if stdoutMode {
-			processFilesStdout(files)
-		} else {
-			processFiles(files)
-		}
-		return
+		return process(files, stdout)
 	}
 
-	// Original chart directory mode
+	// Chart directory mode: <chart-path>
 	if len(args) != 1 {
-		fmt.Fprintf(os.Stderr, "Usage: %s <chart-path>\n", filepath.Base(os.Args[0]))
-		os.Exit(2)
+		usage()
+		return 2
+	}
+	root := filepath.Join(args[0], "templates")
+	if _, err := os.Stat(root); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		return 1
 	}
 
-	processChartDirectory(args[0])
-}
-
-func processFilesStdout(files []string) {
-	for _, file := range files {
-		// Only process YAML and template files
-		if !hasWantedExt(file) {
-			continue
-		}
-
-		// Skip if file doesn't exist or is not in a templates directory
-		if !isHelmTemplate(file) {
-			continue
-		}
-
-		// Read and format file
-		b, err := os.ReadFile(file)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error reading %s: %v\n", file, err)
-			os.Exit(1)
-		}
-
-		content := string(b)
-
-		err = validateTemplateSyntax(content)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Invalid template syntax in %s: %v\n", file, err)
-			os.Exit(1)
-		}
-
-		formatted := formatIndentation(content)
-
-		// Output formatted content to stdout
-		fmt.Print(formatted)
+	files, err := collectFiles(root)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "WalkDir error: %v\n", err)
+		return 1
 	}
+	return process(files, false)
 }
 
-func processFiles(files []string) {
+func usage() {
+	prog := filepath.Base(os.Args[0])
+	fmt.Fprintf(os.Stderr, "Usage: %s <chart-path> OR %s --files <file1> <file2> ... [--stdout]\n", prog, prog)
+}
+
+func collectFiles(root string) ([]string, error) {
+	var out []string
+	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Walk error at %s: %v\n", path, err)
+			return nil
+		}
+		if d.IsDir() || !wanted(path) {
+			return nil
+		}
+		out = append(out, path)
+		return nil
+	})
+	return out, err
+}
+
+func process(files []string, stdout bool) int {
 	var total, updated, failed int
 
 	for _, file := range files {
-		// Only process YAML and template files
-		if !hasWantedExt(file) {
-			continue
-		}
-
-		// Skip if file doesn't exist or is not in a templates directory
-		if !isHelmTemplate(file) {
-			continue
-		}
-
 		total++
 
-		// Format the file and check if it changed
-		changed, err := formatFileInPlace(file)
+		b, err := os.ReadFile(file)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "[ERROR]  %s: %v\n", file, err)
 			failed++
 			continue
 		}
-		if changed {
-			fmt.Printf("[UPDATED] %s\n", file)
-			updated++
+		orig := string(b)
+
+		if err := validateTemplateSyntax(orig); err != nil {
+			fmt.Fprintf(os.Stderr, "[ERROR]  Invalid syntax %s: %v\n", file, err)
+			failed++
+			continue
 		}
-	}
 
-	fmt.Printf("\nProcessed: %d files, Updated: %d, Errors: %d\n", total, updated, failed)
+		formatted := ensureTrailingNewline(formatIndentation(orig))
 
-	if failed > 0 {
-		os.Exit(1)
-	}
-}
+		if stdout {
+			fmt.Print(formatted)
+			continue
+		}
 
-func processChartDirectory(chartPath string) {
-	root := filepath.Join(chartPath, "templates")
-	if _, err := os.Stat(root); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
-	}
+		// In-place mode: don't write if the only change is a trailing newline
+		if formatted == orig || formatted == orig+"\n" {
+			continue
+		}
 
-	var total, updated, failed int
-
-	// Walk through all files in the directory
-	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		info, err := os.Stat(file)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Walk error at %s: %v\n", path, err)
+			fmt.Fprintf(os.Stderr, "[ERROR]  %s: %v\n", file, err)
 			failed++
-			return nil
+			continue
 		}
-		if d.IsDir() {
-			return nil
-		}
-
-		// Only process YAML and template files
-		if !hasWantedExt(path) {
-			return nil
-		}
-		total++
-
-		// Format the file and check if it changed
-		changed, ferr := formatFileInPlace(path)
-		if ferr != nil {
-			fmt.Fprintf(os.Stderr, "[ERROR]  %s: %v\n", path, ferr)
+		if err := os.WriteFile(file, []byte(formatted), info.Mode()); err != nil {
+			fmt.Fprintf(os.Stderr, "[ERROR]  %s: %v\n", file, err)
 			failed++
-			return nil
+			continue
 		}
-		if changed {
-			fmt.Printf("[UPDATED] %s\n", path)
-			updated++
-		}
-		return nil
-	})
 
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "WalkDir error: %v\n", err)
-		os.Exit(1)
+		fmt.Printf("[UPDATED] %s\n", file)
+		updated++
 	}
 
-	fmt.Printf("\nProcessed: %d files, Updated: %d, Errors: %d\n", total, updated, failed)
-
+	if !stdout {
+		fmt.Printf("\nProcessed: %d files, Updated: %d, Errors: %d\n", total, updated, failed)
+	}
 	if failed > 0 {
-		os.Exit(1)
+		return 1
 	}
+	return 0
 }
 
-// Check if file is likely a Helm template (in a templates directory)
-func isHelmTemplate(filePath string) bool {
-	dir := filepath.Dir(filePath)
-	return strings.Contains(dir, "templates") ||
-		strings.HasSuffix(dir, "templates") ||
-		filepath.Base(dir) == "templates"
-}
-
-// Check if file has the extensions we want to process
-func hasWantedExt(path string) bool {
-	ext := strings.ToLower(filepath.Ext(path))
-	switch ext {
+func wanted(path string) bool {
+	switch strings.ToLower(filepath.Ext(path)) {
 	case ".yaml", ".yml", ".tpl":
 		return true
-	default:
-		return false
 	}
+	return false
 }
 
-// Read file, format it, and write back if changed
-func formatFileInPlace(path string) (bool, error) {
-	b, err := os.ReadFile(path)
-	if err != nil {
-		return false, err
+func ensureTrailingNewline(s string) string {
+	if strings.HasSuffix(s, "\n") {
+		return s
 	}
-
-	orig := string(b)
-
-	err = validateTemplateSyntax(orig)
-	if err != nil {
-		return false, fmt.Errorf("invalid template syntax: %w", err)
-	}
-
-	formatted := formatIndentation(orig)
-
-	// Only write if content changed
-	if formatted == orig {
-		return false, nil
-	}
-
-	// Preserve original file permissions
-	info, err := os.Stat(path)
-	if err != nil {
-		return false, err
-	}
-
-	if err := os.WriteFile(path, []byte(formatted), info.Mode()); err != nil {
-		return false, err
-	}
-	return true, nil
+	return s + "\n"
 }
