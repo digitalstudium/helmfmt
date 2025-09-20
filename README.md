@@ -28,8 +28,13 @@ Not supported:
 
 ```gotmpl
 {{- if .Values.enabled }}
-{{/* This is a comment */}}
+{{ range $foobar := .Values.list }}
+{{/*
+This is
+a multiline comment
+*/}}
 {{- $var := .Values.someValue }}
+{{- end }}
 {{- end }}
 ```
 
@@ -37,8 +42,13 @@ Not supported:
 
 ```gotmpl
 {{- if .Values.enabled }}
-  {{/* This is a comment */}}
-  {{- $var := .Values.someValue }}
+  {{ range $foobar := .Values.list }}
+    {{/*
+    This is
+    a multiline comment
+    */}}
+    {{- $var := .Values.someValue }}
+  {{- end }}
 {{- end }}
 ```
 
