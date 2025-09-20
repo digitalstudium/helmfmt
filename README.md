@@ -115,7 +115,7 @@ To use `helmfmt` as a pre-commit hook, add the following to your `.pre-commit-co
 ```yaml
 repos:
   - repo: https://github.com/digitalstudium/helmfmt
-    rev: v0.0.3
+    rev: v0.1.0
     hooks:
       - id: helmfmt
 ```
