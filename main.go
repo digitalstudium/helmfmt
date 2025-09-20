@@ -151,6 +151,12 @@ func formatFileInPlace(path string) (bool, error) {
 	}
 
 	orig := string(b)
+
+	err = validateTemplateSyntax(orig)
+	if err != nil {
+		return false, fmt.Errorf("invalid template syntax: %w", err)
+	}
+
 	formatted := formatIndentation(orig)
 
 	// Only write if content changed

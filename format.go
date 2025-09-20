@@ -1,8 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
+	"text/template"
+
+	_ "unsafe"
+
+	_ "helm.sh/helm/v3/pkg/engine" // Import to work with Helm's private functions (via go linkname)
 )
 
 const indentStep = 2 // Number of spaces per indentation level
@@ -38,6 +44,25 @@ var (
 	// Для извлечения первого слова
 	firstWordRe = regexp.MustCompile(`^\s*(\w+)`)
 )
+
+//go:linkname helmFuncMap helm.sh/helm/v3/pkg/engine.funcMap
+func helmFuncMap() template.FuncMap
+
+// validateTemplateSyntax validates the given template source string using
+// Helm function set. Returns an error if the template has invalid syntax.
+func validateTemplateSyntax(src string) error {
+
+	// Get Helm's built-in function map
+	helmFuncMap := helmFuncMap()
+
+	// Create and parse template with helm function map
+	_, err := template.New("validation").Funcs(helmFuncMap).Parse(src)
+	if err != nil {
+		return fmt.Errorf("invalid template syntax: %w", err)
+	}
+
+	return nil
+}
 
 // Главная функция выравнивания
 func formatIndentation(src string) string {
