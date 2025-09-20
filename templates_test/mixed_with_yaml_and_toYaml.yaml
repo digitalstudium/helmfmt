@@ -1,0 +1,29 @@
+name: "Mixed with yaml and toYaml"
+input: |
+  {{- if .Values.createNamespace }}
+  {{- range .Values.namespaces }}
+  apiVersion: v1
+  kind: Namespace
+  metadata:
+    name: {{ . }}
+  {{- with $.Values.namespaceLabels }}
+    labels:
+  {{ toYaml . | indent 4 }}
+  {{- end }}
+  ---
+  {{- end }}
+  {{- end }}
+expected: |
+  {{- if .Values.createNamespace }}
+    {{- range .Values.namespaces }}
+  apiVersion: v1
+  kind: Namespace
+  metadata:
+    name: {{ . }}
+      {{- with $.Values.namespaceLabels }}
+    labels:
+  {{ toYaml . | indent 4 }}
+      {{- end }}
+  ---
+    {{- end }}
+  {{- end }}
