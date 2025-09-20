@@ -2,9 +2,23 @@
 
 `helmfmt` is a small CLI to auto-align indentation in Helm templates. It walks chart templates recursively and normalizes indentation for control blocks, variables, and simple functions, while respecting comments.
 
-- Input: `.yaml`, `.yml`, `.tpl` in `templates` folder of chart
-- Output: rewritten only if indentation changed
-- Indent: 2 spaces
+---
+
+## What gets formatted
+
+Only lines starting with Go-template tags. YAML indentation is untouched.
+
+Supported:
+
+- Control blocks: `range`, `with`, `define`, `block`
+- Branching: `if`, `else`, `else if`, `end`
+- Vars: `{{ $var := ... }}`
+- Some functions: `include`, `fail`, `printf` etc.
+- Comments: `{{/* ... */}}`
+
+Not supported:
+
+- `tpl` and `toYaml` because it can break YAML indentation
 
 ---
 
@@ -13,23 +27,19 @@
 **Before**
 
 ```gotmpl
-{{ if .Values.enabled }}
-{{ if .Values.debug }}
-{{ $replicas := .Values.replicas }}
-{{ include "chart.labels" . }}
-{{ end }}
-{{ end }}
+{{- if .Values.enabled }}
+{{/* This is a comment */}}
+{{- $var := .Values.someValue }}
+{{- end }}
 ```
 
 **After**
 
 ```gotmpl
-{{ if .Values.enabled }}
-  {{ if .Values.debug }}
-    {{ $replicas := .Values.replicas }}
-    {{ include "chart.labels" . }}
-  {{ end }}
-{{ end }}
+{{- if .Values.enabled }}
+  {{/* This is a comment */}}
+  {{- $var := .Values.someValue }}
+{{- end }}
 ```
 
 ## Installation
@@ -88,20 +98,6 @@ Processed: 3, Updated: 1, Errors: 0
 
 ---
 
-## What gets formatted
-
-Only lines with Go-template tags. YAML indentation is untouched.
-
-Supported:
-
-- Control blocks: `if`, `range`, `with`, `define`, `block`
-- Branching: `else`, `else if`, `end`
-- Vars: `{{ $var := ... }}`
-- Simple functions: `include`, `fail`, `printf` etc.
-- Block comments: `{{/* ... */}}`
-
----
-
 ## pre-commit hook configuration
 
 To use `helmfmt` as a pre-commit hook, add the following to your `.pre-commit-config.yaml`:
@@ -119,9 +115,9 @@ repos:
 ## Roadmap
 
 - Check-only / diff mode
-- More Helm funcs (tpl, dict, etc.)
-- Golden tests/examples
-- Optional YAML alignment around tags
+- More Helm funcs (dict, etc.)
+- Format spaces inside tags
+- Create Zed/VSCode extension
 
 ---
 
