@@ -2,48 +2,39 @@
 
 1. Критерий открытия комментария:
 
-- `{{`(0 spaces)`/*`
-- `{{-`(exactly 1 space)`/*`
+- `{{`(0 spaces/newlines/tabs)`/*`
+- `{{-`(exactly 1 spaces/newlines/tabs)`/*`
 
 2. Критерий закрытия комментария:
 
-- `*/`(0 spaces)`}}` или `*/`(exactly 1 space)`-}}` в той же или в одной из последующих строк.
+- `*/`(0 spaces)`}}` или `*/`(exactly 1 spaces/newlines/tabs)`-}}` в той же или в одной из последующих строк.
 
-3. Критерий открытия обьявления переменной:
+3. Критерий открытия обьявления переменной, а также открытия include/fail/printf etc.:
 
-- `{{`(0 or more spaces)`$var`
-- `{{-`(1 or more spaces)`$var`
+- `{{`(0 or more spaces)`$var/include/fail/printf etc.`
+- `{{-`(1 or more spaces/newlines/tabs)`$var`
 
-4. Критерий закрытия объявления переменной:
+4. Критерий закрытия обьявления переменной, а также открытия include/fail/printf etc.:
 
-- (1 or more spaces)`-}}` или (0 or more spaces)`}}` в той же или в одной из последующих строк.
+- (1 or more spaces/newlines/tabs)`-}}` или (0 or more spaces)`}}` в той же или в одной из последующих строк.
 
-5. Критерий открытия include/fail/printf etc.:
-
-- `{{`(0 or more spaces) `include/fail/printf etc.`
-- `{{-`(1 or more spaces) `include/fail/printf etc.`
-
-6. Критерий закрытия include/fail/printf etc.:
-
-- (1 or more spaces)`-}}` или (0 or more spaces)`}}` в той же или в одной из последующих строк.
-
-7. Критерий открытия начала управляющей конструкции:
+5. Критерий открытия начала управляющей конструкции:
 
 - `{{`(0 or more spaces) control
-- `{{-`(1 or more spaces) control
+- `{{-`(1 or more spaces/newlines/tabs) control
 
-8. Критерий закрытия начала управляющей конструкции:
+6. Критерий закрытия начала управляющей конструкции:
 
-- (1 or more spaces)`-}}` или (0 or more spaces)`}}` в той же или в одной из последующих строк.
+- (1 or more spaces/newlines/tabs)`-}}` или (0 or more spaces)`}}` в той же или в одной из последующих строк.
 
-9. Критерий открытия конца управляющей конструкции:
+7. Критерий открытия конца управляющей конструкции:
 
 - `{{`(0 or more spaces) end
-- `{{-`(1 or more spaces) end
+- `{{-`(1 or more spaces/newlines/tabs) end
 
-10. Критерий закрытия конца управляющей конструкции:
+8. Критерий закрытия конца управляющей конструкции:
 
-- (1 or more spaces)`-}}` или (0 or more spaces)`}}` в той же или в одной из последующих строк.
+- (1 or more spaces/newlines/tabs)`-}}` или (0 or more spaces)`}}` в той же или в одной из последующих строк.
 
 Сценарии:
 

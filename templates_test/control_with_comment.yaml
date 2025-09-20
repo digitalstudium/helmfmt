@@ -1,0 +1,11 @@
+name: "Control structure with comment"
+input: |
+  {{- if .Values.enabled }}
+  {{/* This is a comment */}}
+  {{- $var := .Values.someValue }}
+  {{- end }}
+expected: |
+  {{- if .Values.enabled }}
+    {{/* This is a comment */}}
+    {{- $var := .Values.someValue }}
+  {{- end }}

@@ -1,0 +1,21 @@
+name: "Nested control structure with multiline comment"
+input: |
+  {{- if .Values.enabled }}
+  {{ range $foobar := .Values.list }}
+  {{/*
+  This is
+  a multiline comment
+  */}}
+  {{- $var := .Values.someValue }}
+  {{- end }}
+  {{- end }}
+expected: |
+  {{- if .Values.enabled }}
+    {{ range $foobar := .Values.list }}
+      {{/*
+      This is
+      a multiline comment
+      */}}
+      {{- $var := .Values.someValue }}
+    {{- end }}
+  {{- end }}

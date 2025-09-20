@@ -29,9 +29,8 @@ const (
 var (
 	// Основные паттерны для парсинга тегов
 	tagOpenRe     = regexp.MustCompile(`^\s*\{\{(-?)(\s*)`)
-	commentOpenRe = regexp.MustCompile(`^\s*(\{\{\/\*|\{\{- \/\*)`)
-	commentEndRe  = regexp.MustCompile(`\*\/(?:}}| -}})`)
-	tagEndRe      = regexp.MustCompile(`\s+(-?)\}\}|\}\}`)
+	commentOpenRe = regexp.MustCompile(`^\s*(\{\{/\*|\{\{-\s/\*)`)
+	commentEndRe  = regexp.MustCompile(`\*\/(?:}}|\s-}})`)
 
 	// Паттерны для определения типов токенов
 	varRe       = regexp.MustCompile(`^\s*\$`)
@@ -75,7 +74,14 @@ func formatIndentation(src string) string {
 			continue
 		}
 
-		_, startLine, endLine, kind, found := getTokenAtLineStartSkippingLeadingComments(lines, i)
+		// Сначала проверяем, есть ли комментарий в начале строки
+		commentStart := i
+		if commentOpenRe.MatchString(lines[i]) {
+			// Это комментарий, найдем его конец
+			_, _, _ = skipLeadingBlockComment(lines, i)
+		}
+
+		_, _, endLine, kind, found := getTokenAtLineStartSkippingLeadingComments(lines, i)
 		if !found {
 			continue
 		}
@@ -90,8 +96,9 @@ func formatIndentation(src string) string {
 
 		indent := strings.Repeat(" ", level*indentStep)
 
-		// Применяем отступ ко всем строкам тега
-		for j := startLine; j <= endLine && j < len(lines); j++ {
+		// Применяем отступ ко всем строкам, начиная с комментария (если есть)
+		actualStartLine := commentStart
+		for j := actualStartLine; j <= endLine && j < len(lines); j++ {
 			lines[j] = indent + strings.TrimLeft(lines[j], " \t")
 		}
 
