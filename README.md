@@ -10,7 +10,7 @@ It can be configured for [Zed IDE](https://github.com/digitalstudium/helmfmt?tab
 
 Only lines starting with Go-template tags. YAML indentation is untouched.
 
-These are indented:
+These Go-template tags are indented:
 
 - Control blocks: `range`, `with`, `define`, `block`
 - Branching: `if`, `else`, `else if`, `end`
@@ -28,7 +28,7 @@ These are not indented:
 
 **Before**
 
-```helm
+```yaml
 {{- if .Values.createNamespace }}
 {{- range .Values.namespaces }}
 apiVersion: v1
@@ -46,7 +46,7 @@ metadata:
 
 **After**
 
-```helm
+```yaml
 {{- if .Values.createNamespace }}
   {{- range .Values.namespaces }}
 apiVersion: v1
@@ -156,8 +156,10 @@ Add these lines to your `settings.json`:
   }
 ```
 
-In addition, you should install helm language extension https://github.com/cabrinha/helm.zed
-and helm language server https://github.com/mrjosh/helm-ls
+In addition, you should install:
+
+- helm language extension https://github.com/cabrinha/helm.zed
+- and helm language server https://github.com/mrjosh/helm-ls
 
 ## VSCode IDE configuration
 
@@ -176,8 +178,9 @@ Add these lines to your settings:
 ```
 
 In addition these extensions should be installed:
-https://github.com/WebFreak001/vscode-advanced-local-formatters
-https://github.com/vscode-kubernetes-tools/vscode-kubernetes-tools
+
+- https://github.com/WebFreak001/vscode-advanced-local-formatters
+- https://github.com/vscode-kubernetes-tools/vscode-kubernetes-tools
 
 ---
 
