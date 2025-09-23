@@ -98,7 +98,7 @@ sudo install ./helmfmt /usr/local/bin/
 
 ### Third method
 
-Download it from [releases](https://github.com/digitalstudium/helmfmt/releases) (for Linux only)
+Download it from [releases](https://github.com/digitalstudium/helmfmt/releases)
 
 ---
 
