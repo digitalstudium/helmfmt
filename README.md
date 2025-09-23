@@ -20,7 +20,7 @@ These Go-template tags are indented:
 
 These are not indented:
 
-- `tpl` and `toYaml` because they can break YAML indentation
+- `tpl`, `template` and `toYaml` because they can break YAML indentation
 
 ---
 

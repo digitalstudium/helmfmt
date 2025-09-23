@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io/fs"
 	"os"
@@ -8,45 +9,63 @@ import (
 	"strings"
 )
 
+// Version can be set at build time with -ldflags "-X main.Version=v1.2.3"
+var Version = "dev"
+
 func main() {
 	os.Exit(run(os.Args[1:]))
 }
 
 func run(args []string) int {
-	if len(args) == 0 {
-		usage()
+	// Handle version subcommand early
+	if len(args) > 0 && args[0] == "version" {
+		fmt.Println(Version)
+		return 0
+	}
+
+	fs := flag.NewFlagSet(filepath.Base(os.Args[0]), flag.ContinueOnError)
+	fs.Usage = func() {
+		prog := fs.Name()
+		fmt.Fprintf(fs.Output(), "Usage: %s [--stdout] --files <file1> <file2> ...\n", prog)
+		fmt.Fprintf(fs.Output(), "   OR: %s <chart-path>\n", prog)
+		fmt.Fprintf(fs.Output(), "   OR: %s version\n", prog)
+		fmt.Fprintf(fs.Output(), "\nFlags:\n")
+		fs.PrintDefaults()
+	}
+
+	filesMode := fs.Bool("files", false, "Process specific files (remaining args are file paths)")
+	stdout := fs.Bool("stdout", false, "Output to stdout instead of modifying files")
+	version := fs.Bool("version", false, "Show version and exit")
+
+	if err := fs.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			return 0
+		}
 		return 2
 	}
 
-	stdout := false
-	var files []string
-
-	// Pre-commit/IDE mode: --files <file1> <file2> ... [--stdout]
-	if args[0] == "--files" {
-		if len(args) < 2 {
-			fmt.Fprintln(os.Stderr, "Error: --files requires at least one file argument")
-			return 2
-		}
-		for _, a := range args[1:] {
-			if a == "--stdout" {
-				stdout = true
-				continue
-			}
-			files = append(files, a)
-		}
-		if len(files) == 0 {
-			fmt.Fprintln(os.Stderr, "Error: --files requires at least one file argument")
-			return 2
-		}
-		return process(files, stdout)
+	if *version {
+		fmt.Println(Version)
+		return 0
 	}
 
-	// Chart directory mode: <chart-path>
-	if len(args) != 1 {
-		usage()
+	remaining := fs.Args()
+
+	if *filesMode {
+		if len(remaining) == 0 {
+			fmt.Fprintln(os.Stderr, "Error: --files requires at least one file argument")
+			return 2
+		}
+		return process(remaining, *stdout)
+	}
+
+	// Chart directory mode
+	if len(remaining) != 1 {
+		fs.Usage()
 		return 2
 	}
-	root := filepath.Join(args[0], "templates")
+
+	root := filepath.Join(remaining[0], "templates")
 	if _, err := os.Stat(root); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		return 1
@@ -58,11 +77,6 @@ func run(args []string) int {
 		return 1
 	}
 	return process(files, false)
-}
-
-func usage() {
-	prog := filepath.Base(os.Args[0])
-	fmt.Fprintf(os.Stderr, "Usage: %s <chart-path> OR %s --files <file1> <file2> ... [--stdout]\n", prog, prog)
 }
 
 func collectFiles(root string) ([]string, error) {
