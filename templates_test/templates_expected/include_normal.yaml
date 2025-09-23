@@ -1,0 +1,6 @@
+{{- if .Values.enabled }}
+  {{ include "mytemplate" . }}
+  {{- range .Values.items }}
+    {{- include "itemtemplate" . }}
+  {{- end }}
+{{- end }}

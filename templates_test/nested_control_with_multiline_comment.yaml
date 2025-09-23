@@ -1,21 +1,3 @@
 name: "Nested control structure with multiline comment"
-input: |
-  {{- if .Values.enabled }}
-  {{ range $foobar := .Values.list }}
-  {{/*
-  This is
-  a multiline comment
-  */}}
-  {{- $var := .Values.someValue }}
-  {{- end }}
-  {{- end }}
-expected: |
-  {{- if .Values.enabled }}
-    {{ range $foobar := .Values.list }}
-      {{/*
-      This is
-      a multiline comment
-      */}}
-      {{- $var := .Values.someValue }}
-    {{- end }}
-  {{- end }}
+input_file: "templates/nested_control_with_multiline_comment.yaml"
+expected_file: "templates_expected/nested_control_with_multiline_comment.yaml"

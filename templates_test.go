@@ -1,8 +1,6 @@
 package main
 
 import (
-	"bytes"
-	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -11,10 +9,10 @@ import (
 )
 
 type TestCase struct {
-	Name        string `yaml:"name"`
-	Description string `yaml:"description"`
-	Input       string `yaml:"input"`
-	Expected    string `yaml:"expected"`
+	Name         string  `yaml:"name"`
+	Config       *Config `yaml:"config,omitempty"` // Full config structure
+	InputFile    string  `yaml:"input_file"`
+	ExpectedFile string  `yaml:"expected_file"`
 }
 
 func TestFormatIndentationFromTemplates(t *testing.T) {
@@ -42,53 +40,48 @@ func TestFormatIndentationFromTemplates(t *testing.T) {
 			}
 
 			t.Logf("Running test: %s", testCase.Name)
-			if testCase.Description != "" {
-				t.Logf("Description: %s", testCase.Description)
+
+			// Load default config and apply test-specific overrides
+			config := loadConfig()
+			if testCase.Config != nil {
+				// Merge test config with default config
+				if testCase.Config.IndentSize != 0 {
+					config.IndentSize = testCase.Config.IndentSize
+				}
+				if testCase.Config.Extensions != nil {
+					config.Extensions = testCase.Config.Extensions
+				}
+				if testCase.Config.Rules.Indent != nil {
+					// Merge indent rules
+					for ruleName, ruleConfig := range testCase.Config.Rules.Indent {
+						config.Rules.Indent[ruleName] = ruleConfig
+					}
+				}
 			}
 
-			// Create temp file with test input
-			tmpfile, err := os.CreateTemp("", "helmfmt-test-*.yaml")
+			// Read input file
+			inputPath := filepath.Join(testDir, testCase.InputFile)
+			inputContent, err := os.ReadFile(inputPath)
 			if err != nil {
-				t.Fatal(err)
-			}
-			defer os.Remove(tmpfile.Name()) // cleanup after test
-			defer tmpfile.Close()
-
-			if _, err := tmpfile.Write([]byte(testCase.Input)); err != nil {
-				t.Fatal(err)
-			}
-			if err := tmpfile.Close(); err != nil {
-				t.Fatal(err)
+				t.Fatalf("Failed to read input file %s: %v", inputPath, err)
 			}
 
-			// Capture stdout
-			oldStdout := os.Stdout
-			r, w, _ := os.Pipe()
-			os.Stdout = w
-
-			// Call the REAL process function from main.go with stdout=true
-			exitCode := process([]string{tmpfile.Name()}, true)
-
-			// Close writer, restore stdout
-			w.Close()
-			os.Stdout = oldStdout
-
-			// Read captured output
-			var buf bytes.Buffer
-			if _, err := io.Copy(&buf, r); err != nil {
-				t.Fatal(err)
+			// Read expected file
+			expectedPath := filepath.Join(testDir, testCase.ExpectedFile)
+			expectedContent, err := os.ReadFile(expectedPath)
+			if err != nil {
+				t.Fatalf("Failed to read expected file %s: %v", expectedPath, err)
 			}
-			result := buf.String()
 
-			// Check for processing errors
-			if exitCode != 0 {
-				t.Fatalf("process() failed with exit code %d for test '%s'", exitCode, testCase.Name)
-			}
+			// Format using the input file path for exclusion matching
+			result := formatIndentation(string(inputContent), config, testCase.InputFile)
+			result = ensureTrailingNewline(result)
+			expected := string(expectedContent)
 
 			// Compare result
-			if result != testCase.Expected {
-				t.Errorf("Test '%s' failed\nInput:\n%s\n\nExpected:\n%s\n\nGot:\n%s",
-					testCase.Name, testCase.Input, testCase.Expected, result)
+			if result != expected {
+				t.Errorf("Test '%s' failed\nInput file: %s\nExpected file: %s\nExpected:\n%s\n\nGot:\n%s",
+					testCase.Name, testCase.InputFile, testCase.ExpectedFile, expected, result)
 			}
 		})
 	}
