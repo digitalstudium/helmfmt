@@ -134,8 +134,8 @@ Processed: 2, Updated: 1, Errors: 0
 
 `helmfmt` can be configured using a `.helmfmt` file in JSON format. The tool looks for configuration files in this order:
 
-1. `./.helmfmt` (project directory)
-2. `~/.helmfmt` (home directory)
+1. `~/.helmfmt` (home directory)
+2. `./.helmfmt` (project directory, overrides home directory configuration)
 
 ### Default Configuration
 
