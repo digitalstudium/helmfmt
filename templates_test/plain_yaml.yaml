@@ -1,11 +1,3 @@
 name: "Plain yaml"
-input: |
-  apiVersion: v1
-  kind: Namespace
-  metadata:
-    name: my-namespace
-expected: |
-  apiVersion: v1
-  kind: Namespace
-  metadata:
-    name: my-namespace
+input_file: "templates/plain_yaml.yaml"
+expected_file: "templates_expected/plain_yaml.yaml"

@@ -1,0 +1,8 @@
+name: "Include directive with disabled indentation"
+config:
+  rules:
+    indent:
+      include:
+        disabled: true
+input_file: "templates/include_normal.yaml"
+expected_file: "templates_expected/tests/include_excluded.yaml"

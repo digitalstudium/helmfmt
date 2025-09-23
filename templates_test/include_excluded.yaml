@@ -1,0 +1,8 @@
+name: "Include directive with file exclusion"
+config:
+  rules:
+    indent:
+      include:
+        exclude: ["tests/*"]
+input_file: "templates/tests/include_excluded.yaml"
+expected_file: "templates_expected/tests/include_excluded.yaml"

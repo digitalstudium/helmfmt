@@ -1,0 +1,13 @@
+{{- if .Values.createNamespace }}
+  {{- range .Values.namespaces }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ . }}
+    {{- with $.Values.namespaceLabels }}
+  labels:
+{{ toYaml . | indent 4 }}
+    {{- end }}
+---
+  {{- end }}
+{{- end }}

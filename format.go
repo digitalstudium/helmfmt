@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"text/template"
@@ -10,8 +11,6 @@ import (
 
 	_ "helm.sh/helm/v3/pkg/engine" // Import to work with Helm's private functions (via go linkname)
 )
-
-const indentStep = 2 // Number of spaces per indentation level
 
 // Типы токенов для ясности, что мы нашли
 type tokenKind int
@@ -37,7 +36,6 @@ var (
 	controlRe   = regexp.MustCompile(`^\s*(if|range|with|define|block)\b`)
 	elseRe      = regexp.MustCompile(`^\s*else\b`)
 	endRe       = regexp.MustCompile(`^\s*end\b`)
-	simpleRe    = regexp.MustCompile(`^\s*(include|fail|printf)\b`)
 	endInLineRe = regexp.MustCompile(`\{\{(-?)(\s*)end\b[^}]*(-?)\}\}`)
 
 	// Для извлечения первого слова
@@ -64,7 +62,7 @@ func validateTemplateSyntax(src string) error {
 }
 
 // Главная функция выравнивания
-func formatIndentation(src string) string {
+func formatIndentation(src string, config *Config, filePath string) string {
 	lines := strings.Split(src, "\n")
 	depth := 0
 
@@ -81,9 +79,21 @@ func formatIndentation(src string) string {
 			_, _, _ = skipLeadingBlockComment(lines, i)
 		}
 
-		_, _, endLine, kind, found := getTokenAtLineStartSkippingLeadingComments(lines, i)
+		keyword, _, endLine, kind, found := getTokenAtLineStartSkippingLeadingComments(lines, i, config)
 		if !found {
 			continue
+		}
+
+		// Check if we should skip indenting this simple function
+		if kind == tokSimple {
+			ruleName := getRuleName(keyword, kind)
+			if ruleName != "" {
+				rule := config.Rules.Indent[ruleName] // Updated access pattern
+				if rule.Disabled || matchesExcludePattern(filePath, rule.Exclude) {
+					i = endLine
+					continue // Skip indenting this token
+				}
+			}
 		}
 
 		// Вычисляем уровень отступа
@@ -94,15 +104,13 @@ func formatIndentation(src string) string {
 			}
 		}
 
-		indent := strings.Repeat(" ", level*indentStep)
-
-		// Применяем отступ ко всем строкам, начиная с комментария (если есть)
-		actualStartLine := commentStart
-		for j := actualStartLine; j <= endLine && j < len(lines); j++ {
+		// Apply indentation
+		indent := strings.Repeat(" ", level*config.IndentSize)
+		for j := commentStart; j <= endLine && j < len(lines); j++ {
 			lines[j] = indent + strings.TrimLeft(lines[j], " \t")
 		}
 
-		// Меняем глубину после обработки текущего тега
+		// Always update depth for control structures
 		switch kind {
 		case tokControlOpen:
 			depth++
@@ -119,7 +127,7 @@ func formatIndentation(src string) string {
 }
 
 // Ищем токен в начале строки, пропуская ведущий комментарий
-func getTokenAtLineStartSkippingLeadingComments(lines []string, start int) (keyword string, startLine int, endLine int, kind tokenKind, found bool) {
+func getTokenAtLineStartSkippingLeadingComments(lines []string, start int, config *Config) (keyword string, startLine int, endLine int, kind tokenKind, found bool) {
 	i := start
 
 	for {
@@ -153,16 +161,16 @@ func getTokenAtLineStartSkippingLeadingComments(lines []string, start int) (keyw
 			}
 
 			// Парсим токен из остатка строки
-			return parseTokenFromLine(lines, ci, remainder)
+			return parseTokenFromLine(lines, ci, remainder, config)
 		}
 
 		// Парсим токен напрямую
-		return parseTokenFromLine(lines, i, line)
+		return parseTokenFromLine(lines, i, line, config)
 	}
 }
 
 // Парсинг токена из строки
-func parseTokenFromLine(lines []string, lineIdx int, line string) (keyword string, startLine int, endLine int, kind tokenKind, found bool) {
+func parseTokenFromLine(lines []string, lineIdx int, line string, config *Config) (keyword string, startLine int, endLine int, kind tokenKind, found bool) {
 	// Извлекаем содержимое после {{ или {{-
 	match := tagOpenRe.FindStringSubmatch(line)
 	if match == nil {
@@ -198,12 +206,16 @@ func parseTokenFromLine(lines []string, lineIdx int, line string) (keyword strin
 		end := findTagEndMultiline(lines, lineIdx, line)
 		return "end", lineIdx, end, tokEnd, true
 
-	case simpleRe.MatchString(content):
-		matches := simpleRe.FindStringSubmatch(content)
-		keyword := matches[1]
+	default:
+		// Check if first word has a rule defined - if so, treat as simple
+		if matches := firstWordRe.FindStringSubmatch(content); matches != nil {
+			keyword := matches[1]
 
-		end := findTagEndMultiline(lines, lineIdx, line)
-		return keyword, lineIdx, end, tokSimple, true
+			if _, hasRule := config.Rules.Indent[keyword]; hasRule { // Updated access pattern
+				end := findTagEndMultiline(lines, lineIdx, line)
+				return keyword, lineIdx, end, tokSimple, true
+			}
+		}
 	}
 
 	return "", lineIdx, lineIdx, tokNone, false
@@ -287,4 +299,26 @@ func hasEndInRange(lines []string, start, end int) bool {
 		}
 	}
 	return false
+}
+
+func matchesExcludePattern(filePath string, patterns []string) bool {
+	for _, pattern := range patterns {
+		// Convert glob pattern to regex
+		if matched, _ := filepath.Match(pattern, filePath); matched {
+			return true
+		}
+
+		// Also support regex patterns
+		if regexp.MustCompile(pattern).MatchString(filePath) {
+			return true
+		}
+	}
+	return false
+}
+
+func getRuleName(keyword string, kind tokenKind) string {
+	if kind == tokSimple {
+		return keyword // Just return the keyword (printf, include, fail)
+	}
+	return ""
 }

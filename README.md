@@ -107,6 +107,9 @@ Download it from [releases](https://github.com/digitalstudium/helmfmt/releases) 
 ```bash
 helmfmt <chart-path>
 helmfmt --files <file1> <file2> ...
+helmfmt --files <file1> <file2> ... --stdout
+helmfmt --disable-indent=template,include <chart-path>
+helmfmt --enable-indent=toYaml --files <file1> <file2> ...
 ```
 
 Example run:
@@ -127,6 +130,112 @@ Processed: 2, Updated: 1, Errors: 0
 
 ---
 
+## Configuration
+
+`helmfmt` can be configured using a `.helmfmt` file in JSON format. The tool looks for configuration files in this order:
+
+1. `./.helmfmt` (project directory)
+2. `~/.helmfmt` (home directory)
+
+### Default Configuration
+
+```json
+{
+  "indent_size": 2,
+  "extensions": [".yaml", ".yml", ".tpl"],
+  "rules": {
+    "indent": {
+      "tpl": {
+        "disabled": true,
+        "exclude": []
+      },
+      "toYaml": {
+        "disabled": true,
+        "exclude": []
+      },
+      "template": {
+        "disabled": false,
+        "exclude": []
+      },
+      "printf": {
+        "disabled": false,
+        "exclude": []
+      },
+      "include": {
+        "disabled": false,
+        "exclude": []
+      },
+      "fail": {
+        "disabled": false,
+        "exclude": []
+      }
+    }
+  }
+}
+```
+
+### Rule Configuration
+
+Each rule can be configured with:
+
+- **`disabled`**: Set to `true` to disable the rule entirely
+- **`exclude`**: Array of file patterns to exclude from this rule
+
+### Example Configurations
+
+**Enable `tpl` and `toYaml` indentation:**
+
+```json
+{
+  "rules": {
+    "indent": {
+      "tpl": {
+        "disabled": false
+      },
+      "toYaml": {
+        "disabled": false
+      }
+    }
+  }
+}
+```
+
+**Exclude test files from `include` indentation:**
+
+```json
+{
+  "rules": {
+    "indent": {
+      "include": {
+        "exclude": ["tests/*", "**/test-*.yaml"]
+      }
+    }
+  }
+}
+```
+
+**Use 4 spaces for indentation:**
+
+```json
+{
+  "indent_size": 4
+}
+```
+
+### Command-line Rule Overrides
+
+You can override configuration rules using command-line flags:
+
+```bash
+# Disable specific rules
+helmfmt --disable-indent=template,include <chart-path>
+
+# Enable specific rules (overrides config file)
+helmfmt --enable-indent=tpl,toYaml <chart-path>
+```
+
+---
+
 ## pre-commit hook configuration
 
 To use `helmfmt` as a pre-commit hook, add the following to your `.pre-commit-config.yaml`:
@@ -134,7 +243,7 @@ To use `helmfmt` as a pre-commit hook, add the following to your `.pre-commit-co
 ```yaml
 repos:
   - repo: https://github.com/digitalstudium/helmfmt
-    rev: v0.1.1
+    rev: v0.2.0
     hooks:
       - id: helmfmt
 ```

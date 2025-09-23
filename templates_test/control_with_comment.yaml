@@ -1,11 +1,3 @@
 name: "Control structure with comment"
-input: |
-  {{- if .Values.enabled }}
-  {{/* This is a comment */}}
-  {{- $var := .Values.someValue }}
-  {{- end }}
-expected: |
-  {{- if .Values.enabled }}
-    {{/* This is a comment */}}
-    {{- $var := .Values.someValue }}
-  {{- end }}
+input_file: "templates/control_with_comment.yaml"
+expected_file: "templates_expected/control_with_comment.yaml"
