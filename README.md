@@ -18,7 +18,7 @@ These Go-template tags are indented:
 - Some functions: `include`, `fail`, `printf` etc.
 - Comments: `{{/* ... */}}`
 
-These are not indented:
+These are not indented by default but can be [configured](https://github.com/digitalstudium/helmfmt?tab=readme-ov-file#configuration):
 
 - `tpl`, `template` and `toYaml` because they can break YAML indentation
 
