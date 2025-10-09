@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -85,7 +86,7 @@ func run() int {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Apply rule overrides from flags
 			for _, rule := range disableRules {
-				if _, exists := config.Rules.Indent[rule]; exists { // Updated access pattern
+				if _, exists := config.Rules.Indent[rule]; exists {
 					ruleConfig := config.Rules.Indent[rule]
 					ruleConfig.Disabled = true
 					config.Rules.Indent[rule] = ruleConfig
@@ -95,13 +96,25 @@ func run() int {
 			}
 
 			for _, rule := range enableRules {
-				if _, exists := config.Rules.Indent[rule]; exists { // Updated access pattern
+				if _, exists := config.Rules.Indent[rule]; exists {
 					ruleConfig := config.Rules.Indent[rule]
 					ruleConfig.Disabled = false
 					config.Rules.Indent[rule] = ruleConfig
 				} else {
 					return fmt.Errorf("unknown rule: %s", rule)
 				}
+			}
+
+			// Check if stdin is being piped
+			stat, _ := os.Stdin.Stat()
+			stdinPiped := (stat.Mode() & os.ModeCharDevice) == 0
+
+			if stdinPiped {
+				// Process from stdin
+				if len(args) > 0 {
+					return fmt.Errorf("cannot specify files when reading from stdin")
+				}
+				return processStdin(config)
 			}
 
 			if files {
@@ -148,6 +161,27 @@ func run() int {
 		return 1
 	}
 	return 0
+}
+
+func processStdin(config *Config) error {
+	// Read all input from stdin
+	input, err := io.ReadAll(os.Stdin)
+	if err != nil {
+		return fmt.Errorf("error reading from stdin: %w", err)
+	}
+
+	orig := string(input)
+
+	// Validate syntax
+	if err := validateTemplateSyntax(orig); err != nil {
+		return fmt.Errorf("invalid syntax: %w", err)
+	}
+
+	// Format and output to stdout
+	formatted := ensureTrailingNewline(formatIndentation(orig, config, "<stdin>"))
+	fmt.Print(formatted)
+
+	return nil
 }
 
 func collectFiles(root string, config *Config) ([]string, error) {
