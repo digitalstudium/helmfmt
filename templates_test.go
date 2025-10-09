@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -73,7 +75,7 @@ func TestFormatIndentationFromTemplates(t *testing.T) {
 				t.Fatalf("Failed to read expected file %s: %v", expectedPath, err)
 			}
 
-			// Format using the input file path for exclusion matching
+			// Test 1: Direct formatting (file mode)
 			result := formatIndentation(string(inputContent), config, testCase.InputFile)
 			result = ensureTrailingNewline(result)
 			expected := string(expectedContent)
@@ -82,6 +84,49 @@ func TestFormatIndentationFromTemplates(t *testing.T) {
 			if result != expected {
 				t.Errorf("Test '%s' failed\nInput file: %s\nExpected file: %s\nExpected:\n%s\n\nGot:\n%s",
 					testCase.Name, testCase.InputFile, testCase.ExpectedFile, expected, result)
+			}
+
+			// Test 2: stdin mode (skip if test uses file exclusion patterns)
+			hasExcludePatterns := false
+			if testCase.Config != nil && testCase.Config.Rules.Indent != nil {
+				for _, ruleConfig := range testCase.Config.Rules.Indent {
+					if len(ruleConfig.Exclude) > 0 {
+						hasExcludePatterns = true
+						break
+					}
+				}
+			}
+
+			if !hasExcludePatterns {
+				t.Run("stdin", func(t *testing.T) {
+					// Setup stdin/stdout pipes
+					oldStdin, oldStdout := os.Stdin, os.Stdout
+					r, w, _ := os.Pipe()
+					os.Stdin = r
+
+					rOut, wOut, _ := os.Pipe()
+					os.Stdout = wOut
+
+					// Write input and process
+					go func() {
+						w.Write(inputContent)
+						w.Close()
+					}()
+
+					processStdin(config)
+
+					wOut.Close()
+					os.Stdin, os.Stdout = oldStdin, oldStdout
+
+					// Read output
+					var buf bytes.Buffer
+					io.Copy(&buf, rOut)
+
+					if buf.String() != expected {
+						t.Errorf("Test '%s' failed (stdin)\nExpected:\n%s\n\nGot:\n%s",
+							testCase.Name, expected, buf.String())
+					}
+				})
 			}
 		})
 	}

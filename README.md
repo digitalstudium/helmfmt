@@ -243,7 +243,7 @@ To use `helmfmt` as a pre-commit hook, add the following to your `.pre-commit-co
 ```yaml
 repos:
   - repo: https://github.com/digitalstudium/helmfmt
-    rev: v0.2.0
+    rev: v0.3.0
     hooks:
       - id: helmfmt
 ```
@@ -258,7 +258,6 @@ Add these lines to your `settings.json`:
       "formatter": {
         "external": {
           "command": "helmfmt",
-          "arguments": ["--files", "{buffer_path}", "--stdout"]
         }
       }
     }
@@ -277,7 +276,7 @@ Add these lines to your settings:
 ```json
   "advancedLocalFormatters.formatters": [
     {
-      "command": ["helmfmt", "--files", "$absoluteFilePath", "--stdout"],
+      "command": ["helmfmt"],
       "languages": ["helm"]
     }
   ],
