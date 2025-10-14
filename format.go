@@ -32,7 +32,7 @@ var (
 	commentEndRe  = regexp.MustCompile(`\*\/(?:}}|\s-}})`)
 
 	// Паттерны для определения типов токенов
-	varRe       = regexp.MustCompile(`^\s*\$`)
+	varRe       = regexp.MustCompile(`^\s*\$\w+\s*:=`)
 	controlRe   = regexp.MustCompile(`^\s*(if|range|with|define|block)\b`)
 	elseRe      = regexp.MustCompile(`^\s*else\b`)
 	endRe       = regexp.MustCompile(`^\s*end\b`)
