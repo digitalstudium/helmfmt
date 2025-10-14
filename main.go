@@ -39,9 +39,9 @@ func loadConfig() *Config {
 			Indent: map[string]RuleConfig{
 				"tpl":      {Disabled: true, Exclude: []string{}},
 				"toYaml":   {Disabled: true, Exclude: []string{}},
-				"template": {Disabled: false, Exclude: []string{}},
+				"template": {Disabled: true, Exclude: []string{}},
+				"include":  {Disabled: true, Exclude: []string{}},
 				"printf":   {Disabled: false, Exclude: []string{}},
-				"include":  {Disabled: false, Exclude: []string{}},
 				"fail":     {Disabled: false, Exclude: []string{}},
 			},
 		},

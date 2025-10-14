@@ -15,12 +15,12 @@ These Go-template tags are indented:
 - Control blocks: `range`, `with`, `define`, `block`
 - Branching: `if`, `else`, `else if`, `end`
 - Vars: `{{ $var := ... }}`
-- Some functions: `include`, `fail`, `printf` etc.
+- Some functions: `fail`, `printf` etc.
 - Comments: `{{/* ... */}}`
 
 These are not indented by default but can be [configured](https://github.com/digitalstudium/helmfmt?tab=readme-ov-file#configuration):
 
-- `tpl`, `template` and `toYaml` because they can break YAML indentation
+- `tpl`, `template`, `include` and `toYaml` because they can break YAML indentation
 
 ---
 
@@ -108,8 +108,7 @@ Download it from [releases](https://github.com/digitalstudium/helmfmt/releases)
 helmfmt <chart-path>
 helmfmt --files <file1> <file2> ...
 helmfmt --files <file1> <file2> ... --stdout
-helmfmt --disable-indent=template,include <chart-path>
-helmfmt --enable-indent=toYaml --files <file1> <file2> ...
+helmfmt --enable-indent=toYaml,include --files <file1> <file2> ...
 ```
 
 Example run:
@@ -154,14 +153,14 @@ Processed: 2, Updated: 1, Errors: 0
         "exclude": []
       },
       "template": {
-        "disabled": false,
-        "exclude": []
-      },
-      "printf": {
-        "disabled": false,
+        "disabled": true,
         "exclude": []
       },
       "include": {
+        "disabled": true,
+        "exclude": []
+      },      
+      "printf": {
         "disabled": false,
         "exclude": []
       },
@@ -207,6 +206,7 @@ Each rule can be configured with:
   "rules": {
     "indent": {
       "include": {
+        "disabled": false,
         "exclude": ["tests/*", "**/test-*.yaml"]
       }
     }
@@ -227,9 +227,6 @@ Each rule can be configured with:
 You can override configuration rules using command-line flags:
 
 ```bash
-# Disable specific rules
-helmfmt --disable-indent=template,include <chart-path>
-
 # Enable specific rules (overrides config file)
 helmfmt --enable-indent=tpl,toYaml <chart-path>
 ```
@@ -243,7 +240,7 @@ To use `helmfmt` as a pre-commit hook, add the following to your `.pre-commit-co
 ```yaml
 repos:
   - repo: https://github.com/digitalstudium/helmfmt
-    rev: v0.3.0
+    rev: v0.4.0
     hooks:
       - id: helmfmt
 ```
