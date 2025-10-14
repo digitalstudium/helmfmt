@@ -1,4 +1,5 @@
 {{- if .Values.enabled }}
 {{/* This is a comment */}}
 {{- $var := .Values.someValue }}
+{{ $var.foo | toYaml  | indent 8 }}
 {{- end }}
