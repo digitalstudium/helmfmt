@@ -2,12 +2,10 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - "v*"
+  pull_request:
     branches:
       - main
-  pull_request:
+  push:
     branches:
       - main
 
@@ -15,7 +13,9 @@ permissions:
   contents: write
 
 jobs:
-  goreleaser:
+  # Test and build snapshot for PRs
+  test-build:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,21 +26,62 @@ jobs:
         with:
           go-version: "1.25"
 
-      - name: Set version
+      - name: Run tests
+        run: go test -v ./...
+
+      - name: Set version from VERSION file
         id: version
         run: |
-          if [[ "${{ startsWith(github.ref, 'refs/tags/') }}" == "true" ]]; then
-            echo "version=${{ github.ref_name }}" >> $GITHUB_OUTPUT
-          else
-            VERSION=$(cat VERSION)
-            echo "version=v${VERSION}" >> $GITHUB_OUTPUT
-          fi
+          VERSION=$(cat VERSION)
+          echo "version=v${VERSION}" >> $GITHUB_OUTPUT
 
       - uses: goreleaser/goreleaser-action@v5
         with:
           distribution: goreleaser
           version: v1.26.2
-          args: ${{ startsWith(github.ref, 'refs/tags/') && 'release' || 'build --snapshot' }} --clean
+          args: build --snapshot --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GORELEASER_CURRENT_TAG: ${{ steps.version.outputs.version }}
+
+  # Create tag and release when PR is merged to main
+  release:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v4
+        with:
+          go-version: "1.25"
+
+      - name: Read version and create tag
+        id: version
+        run: |
+          VERSION=$(cat VERSION)
+          TAG="v${VERSION}"
+          echo "version=${TAG}" >> $GITHUB_OUTPUT
+
+          # Check if tag already exists
+          if git rev-parse "${TAG}" >/dev/null 2>&1; then
+            echo "Tag ${TAG} already exists, skipping release"
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git tag -a "${TAG}" -m "Release ${TAG}"
+            git push origin "${TAG}"
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - uses: goreleaser/goreleaser-action@v5
+        if: steps.version.outputs.skip != 'true'
+        with:
+          distribution: goreleaser
+          version: v1.26.2
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GORELEASER_CURRENT_TAG: ${{ steps.version.outputs.version }}
