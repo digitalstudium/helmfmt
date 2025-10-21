@@ -109,24 +109,26 @@ func run() int {
 			stat, _ := os.Stdin.Stat()
 			stdinPiped := (stat.Mode() & os.ModeCharDevice) == 0
 
-			if stdinPiped {
-				// Process from stdin
-				if len(args) > 0 {
-					return fmt.Errorf("cannot specify files when reading from stdin")
-				}
-				return processStdin(config)
-			}
-
+			// If --files flag is used, process the provided files
 			if files {
-				// Files mode
 				if len(args) == 0 {
+					// --files with no args means read filenames from stdin (pre-commit style)
+					if stdinPiped {
+						return processFilesFromStdin(config, stdout)
+					}
 					return fmt.Errorf("--files requires at least one file argument")
 				}
+				// --files with args means process those files
 				exitCode := process(args, stdout, config)
 				if exitCode != 0 {
 					os.Exit(exitCode)
 				}
 				return nil
+			}
+
+			// If stdin is piped and no --files flag, process stdin as content
+			if stdinPiped && len(args) == 0 {
+				return processStdin(config)
 			}
 
 			// Chart mode
@@ -161,6 +163,33 @@ func run() int {
 		return 1
 	}
 	return 0
+}
+
+func processFilesFromStdin(config *Config, stdout bool) error {
+	// Read filenames from stdin (one per line)
+	input, err := io.ReadAll(os.Stdin)
+	if err != nil {
+		return fmt.Errorf("error reading from stdin: %w", err)
+	}
+
+	lines := strings.Split(strings.TrimSpace(string(input)), "\n")
+	var filenames []string
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line != "" {
+			filenames = append(filenames, line)
+		}
+	}
+
+	if len(filenames) == 0 {
+		return fmt.Errorf("no files provided via stdin")
+	}
+
+	exitCode := process(filenames, stdout, config)
+	if exitCode != 0 {
+		os.Exit(exitCode)
+	}
+	return nil
 }
 
 func processStdin(config *Config) error {
