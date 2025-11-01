@@ -2,7 +2,7 @@
 
 `helmfmt` is a small CLI to auto-align indentation in Helm templates. It walks chart templates recursively and normalizes indentation for control blocks, variables, and simple functions, while respecting comments.
 
-It can be configured for [Zed IDE](https://github.com/digitalstudium/helmfmt?tab=readme-ov-file#zed-ide-configuration)/[VS Code](https://github.com/digitalstudium/helmfmt?tab=readme-ov-file#vscode-ide-configuration), and as a [pre-commit hook](https://github.com/digitalstudium/helmfmt?tab=readme-ov-file#pre-commit-hook-configuration).
+It can be configured for [Zed IDE](https://github.com/digitalstudium/helmfmt?tab=readme-ov-file#zed-ide-configuration)/[VS Code](https://github.com/digitalstudium/helmfmt?tab=readme-ov-file#vscode-ide-configuration)/[VIM](https://github.com/digitalstudium/helmfmt?tab=readme-ov-file#vim-configuration), and as a [pre-commit hook](https://github.com/digitalstudium/helmfmt?tab=readme-ov-file#pre-commit-hook-configuration).
 
 ---
 
@@ -159,7 +159,7 @@ Processed: 2, Updated: 1, Errors: 0
       "include": {
         "disabled": true,
         "exclude": []
-      },      
+      },
       "printf": {
         "disabled": false,
         "exclude": []
@@ -287,11 +287,33 @@ In addition these extensions should be installed:
 - https://github.com/WebFreak001/vscode-advanced-local-formatters
 - https://github.com/vscode-kubernetes-tools/vscode-kubernetes-tools
 
+## VIM configuration
+
+### Without plugin
+
+Add to your `.vimrc`:
+
+```vim
+autocmd BufRead,BufNewFile */templates/*.yaml,*/templates/*.yml set filetype=helm
+autocmd FileType helm nnoremap <buffer> <leader>f :%!helmfmt<CR>
+```
+
+Press `\f` in any Helm template to format it.
+
+### With `towolf/vim-helm` plugin
+
+If you installed the [`towolf/vim-helm`](https://github.com/towolf/vim-helm) plugin for enhanced syntax highlighting, the filetype is set automatically. Just add:
+
+```vim
+autocmd FileType helm nnoremap <buffer> <leader>f :%!helmfmt<CR>
+```
+
+In both cases, ensure `helmfmt` is in your `$PATH`.
+
 ---
 
 ## Roadmap
 
-- Check-only / diff mode
 - More Helm funcs (dict, etc.)
 - Format spaces inside tags
 
