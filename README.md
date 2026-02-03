@@ -252,6 +252,16 @@ repos:
 Add these lines to your `settings.json`:
 
 ```json
+  "file_types": {
+    "Helm": [
+      "**/templates/**/*.tpl",
+      "**/templates/**/*.yaml",
+      "**/templates/**/*.yml",
+      "**/helmfile.d/**/*.yaml",
+      "**/helmfile.d/**/*.yml",
+      "**/values*.yaml"
+    ]
+  },
   "languages": {
     "Helm": {
       "formatter": {
