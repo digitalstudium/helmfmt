@@ -4,7 +4,7 @@
 
 It can be configured for [Zed IDE](https://github.com/digitalstudium/helmfmt?tab=readme-ov-file#zed-ide-configuration)/[VS Code](https://github.com/digitalstudium/helmfmt?tab=readme-ov-file#vscode-ide-configuration)/[VIM](https://github.com/digitalstudium/helmfmt?tab=readme-ov-file#vim-configuration), and as a [pre-commit hook](https://github.com/digitalstudium/helmfmt?tab=readme-ov-file#pre-commit-hook-configuration).
 
-⚠️ Important: helmfmt only formats Go template tags (e.g., `{{ if ... }}`, `{{ range ... }}`). It does NOT format or re-indent YAML content. YAML structure and indentation are left completely untouched.
+**Important**: `helmfmt` only formats Go template tags (e.g., `{{ if ... }}`, `{{ range ... }}`). It does not format or re-indent YAML content. YAML structure and indentation are left completely untouched.
 
 ---
 
@@ -30,55 +30,94 @@ These are not indented by default but can be [configured](https://github.com/dig
 
 **Before**
 
-```yaml
-{{- if .Values.createNamespace }}
-{{- range .Values.namespaces }}
-apiVersion: v1
-kind: Namespace
+```go-template
+{{- range $cluster, $teams := .Values.clusters -}}
+{{- range $team, $namespaces := $teams -}}
+{{- range $namespace, $charts := $namespaces -}}
+{{- range $chart, $config := $charts -}}
+{{- range $release := $config.releases -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
 metadata:
-  name: {{ . }}
-{{- with $.Values.namespaceLabels }}
-  labels:
-{{ toYaml . | indent 4 }}
+  name: {{ include "generateAppName" (list $cluster $team $namespace $chart $release) }}
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: {{ $config.repo }}
+    targetRevision: {{ $config.version }}
+    chart: {{ $chart }}
+  destination:
+{{- with (get $.Values.clusterServers $cluster) }}
+    server: {{ . }}
+{{- else }}
+{{- fail (printf "Cluster %s not found in clusterServers" $cluster) }}
 {{- end }}
+    namespace: {{ include "destinationNamespace" (list $team $namespace) }}
 ---
-{{- end }}
-{{- end }}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
 ```
 
 **After**
 
-```yaml
-{{- if .Values.createNamespace }}
-  {{- range .Values.namespaces }}
-apiVersion: v1
-kind: Namespace
+```go-template
+{{- range $cluster, $teams := .Values.clusters -}}
+  {{- range $team, $namespaces := $teams -}}
+    {{- range $namespace, $charts := $namespaces -}}
+      {{- range $chart, $config := $charts -}}
+        {{- range $release := $config.releases -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
 metadata:
-  name: {{ . }}
-    {{- with $.Values.namespaceLabels }}
-  labels:
-{{ toYaml . | indent 4 }}
+  name: {{ include "generateAppName" (list $cluster $team $namespace $chart $release) }}
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: {{ $config.repo }}
+    targetRevision: {{ $config.version }}
+    chart: {{ $chart }}
+  destination:
+    {{- with (get $.Values.clusterServers $cluster) }}
+    server: {{ . }}
+    {{- else }}
+      {{- fail (printf "Cluster %s not found in clusterServers" $cluster) }}
     {{- end }}
+    namespace: {{ include "destinationNamespace" (list $team $namespace) }}
 ---
-  {{- end }}
-{{- end }}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
 ```
 
 ## Installation
 
 ### First method
 
+Download it from [releases](https://github.com/digitalstudium/helmfmt/releases) and put into `PATH` folder, e. g. for Linux:
+```bash
+sudo install ./Downloads/helmfmt /usr/local/bin/
+```
+
+### Second method
+
 ```bash
 go install github.com/digitalstudium/helmfmt@latest
 ```
 
-Then you should add `$HOME/go/bin/` to PATH if not already done:
+Then add `$HOME/go/bin/` to `PATH` if not already done:
 
 ```bash
 echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.bashrc && source ~/.bashrc
 ```
 
-### Second method
+### Third method
 
 ```bash
 git clone https://github.com/digitalstudium/helmfmt
@@ -86,21 +125,12 @@ cd helmfmt
 go build
 ```
 
-If you compiled it via `go build` then you can run it with:
-
-```bash
-./helmfmt <chart-path>
-```
-
-or add it to PATH via:
+Then add it to `PATH` via:
 
 ```bash
 sudo install ./helmfmt /usr/local/bin/
 ```
 
-### Third method
-
-Download it from [releases](https://github.com/digitalstudium/helmfmt/releases)
 
 ---
 
@@ -237,6 +267,8 @@ helmfmt --enable-indent=tpl,toYaml <chart-path>
 
 ## pre-commit hook configuration
 
+https://github.com/pre-commit/pre-commit should be installed  first
+
 To use `helmfmt` as a pre-commit hook, add the following to your `.pre-commit-config.yaml`:
 
 ```yaml
@@ -248,8 +280,12 @@ repos:
 ```
 
 ## Zed IDE configuration
+First, you should install:
 
-Add these lines to your `settings.json`:
+- helm language extension https://github.com/cabrinha/helm.zed
+- and helm language server https://github.com/mrjosh/helm-ls
+
+Then add these lines to your `settings.json`:
 
 ```json
   "file_types": {
@@ -270,14 +306,14 @@ Add these lines to your `settings.json`:
   }
 ```
 
-In addition, you should install:
-
-- helm language extension https://github.com/cabrinha/helm.zed
-- and helm language server https://github.com/mrjosh/helm-ls
-
 ## VSCode IDE configuration
 
-Add these lines to your settings:
+First, these extensions should be installed:
+
+- https://github.com/WebFreak001/vscode-advanced-local-formatters
+- https://github.com/vscode-kubernetes-tools/vscode-kubernetes-tools
+
+Then add these lines to your settings:
 
 ```json
   "advancedLocalFormatters.formatters": [
@@ -291,14 +327,13 @@ Add these lines to your settings:
   }
 ```
 
-In addition these extensions should be installed:
-
-- https://github.com/WebFreak001/vscode-advanced-local-formatters
-- https://github.com/vscode-kubernetes-tools/vscode-kubernetes-tools
-
 ## VIM configuration
 
-### Without plugin
+### First method
+
+Just type `:%! helmfmt` inside template
+
+### Second method
 
 Add to your `.vimrc`:
 
@@ -309,15 +344,15 @@ autocmd FileType helm nnoremap <buffer> <leader>f :%!helmfmt<CR>
 
 Press `\f` in any Helm template to format it.
 
-### With `towolf/vim-helm` plugin
+### Third method
 
-If you installed the [`towolf/vim-helm`](https://github.com/towolf/vim-helm) plugin for enhanced syntax highlighting, the filetype is set automatically. Just add:
+Install [`towolf/vim-helm`](https://github.com/towolf/vim-helm) plugin for enhanced syntax highlighting. The filetype is set automatically. Just add to `.vimrc`:
 
 ```vim
 autocmd FileType helm nnoremap <buffer> <leader>f :%!helmfmt<CR>
 ```
 
-In both cases, ensure `helmfmt` is in your `$PATH`.
+Press `\f` in any Helm template to format it.
 
 ---
 
