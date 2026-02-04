@@ -256,10 +256,7 @@ Add these lines to your `settings.json`:
     "Helm": [
       "**/templates/**/*.tpl",
       "**/templates/**/*.yaml",
-      "**/templates/**/*.yml",
-      "**/helmfile.d/**/*.yaml",
-      "**/helmfile.d/**/*.yml",
-      "**/values*.yaml"
+      "**/templates/**/*.yml"
     ]
   },
   "languages": {
