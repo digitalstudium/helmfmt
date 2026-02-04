@@ -10,8 +10,6 @@ It can be configured for [Zed IDE](https://github.com/digitalstudium/helmfmt?tab
 
 ## What gets formatted
 
-Only lines starting with Go-template tags. YAML indentation is untouched.
-
 These Go-template tags are indented:
 
 - Control blocks: `range`, `with`, `define`, `block`
