@@ -96,14 +96,19 @@ spec:
 
 ## Installation
 
-### First method
+### One-click installation (Linux)
+```bash
+curl -L https://github.com/digitalstudium/helmfmt/releases/latest/download/helmfmt_Linux_x86_64.tar.gz | sudo tar -xzf - -C /usr/local/bin/ helmfmt
+```
+### Other methods
+#### First method
 
 Download it from [releases](https://github.com/digitalstudium/helmfmt/releases) and put into `PATH` folder, e. g. for Linux:
 ```bash
 sudo install ./Downloads/helmfmt /usr/local/bin/
 ```
 
-### Second method
+#### Second method
 
 ```bash
 go install github.com/digitalstudium/helmfmt@latest
@@ -115,7 +120,7 @@ Then add `$HOME/go/bin/` to `PATH` if not already done:
 echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.bashrc && source ~/.bashrc
 ```
 
-### Third method
+#### Third method
 
 ```bash
 git clone https://github.com/digitalstudium/helmfmt
