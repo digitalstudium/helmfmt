@@ -1,10 +1,8 @@
 # helmfmt
 
-`helmfmt` is a CLI that auto-aligns indentation in Helm templates, focusing on lines with Go-template tags. It recursively normalizes indentation for control blocks, variables, functions, and comments, improving chart readability (without affecting YAML indentation).
+`helmfmt` creates consistent formatting for Helm templates. It auto-aligns Go-template indentation for control blocks (e.g., `{{ if ... }}`, `{{ range ... }}`), variables, and comments, improving readability. It does **not** affect raw YAML structure, keeping your chart valid while making it cleaner.
 
 It can be configured for [Zed IDE](https://github.com/digitalstudium/helmfmt?tab=readme-ov-file#zed-ide-configuration)/[VS Code](https://github.com/digitalstudium/helmfmt?tab=readme-ov-file#vscode-ide-configuration)/[VIM](https://github.com/digitalstudium/helmfmt?tab=readme-ov-file#vim-configuration), and as a [pre-commit hook](https://github.com/digitalstudium/helmfmt?tab=readme-ov-file#pre-commit-hook-configuration).
-
-**Important**: `helmfmt` only formats Go template tags (e.g., `{{ if ... }}`, `{{ range ... }}`). It does not format or re-indent YAML content. YAML structure and indentation are left completely untouched.
 
 ---
 
