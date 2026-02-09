@@ -78,11 +78,11 @@ spec:
     targetRevision: {{ $config.version }}
     chart: {{ $chart }}
   destination:
-    {{- with (get $.Values.clusterServers $cluster) }}
+          {{- with (get $.Values.clusterServers $cluster) }}
     server: {{ . }}
-    {{- else }}
-      {{- fail (printf "Cluster %s not found in clusterServers" $cluster) }}
-    {{- end }}
+          {{- else }}
+            {{- fail (printf "Cluster %s not found in clusterServers" $cluster) }}
+          {{- end }}
     namespace: {{ include "destinationNamespace" (list $team $namespace) }}
 ---
         {{- end -}}
