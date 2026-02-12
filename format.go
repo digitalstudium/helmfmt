@@ -63,26 +63,34 @@ func validateTemplateSyntax(src string) error {
 
 // Главная функция выравнивания
 func formatIndentation(src string, config *Config, filePath string) string {
-	lines := strings.Split(src, "\n")
-	depth := 0
+    lines := strings.Split(src, "\n")
+    depth := 0
 
-	for i := 0; i < len(lines); i++ {
-		trimmed := strings.TrimSpace(lines[i])
-		if trimmed == "" {
-			continue
-		}
+    for i := 0; i < len(lines); i++ {
+        trimmed := strings.TrimSpace(lines[i])
+        if trimmed == "" {
+            continue
+        }
 
-		// Сначала проверяем, есть ли комментарий в начале строки
-		commentStart := i
-		if commentOpenRe.MatchString(lines[i]) {
-			// Это комментарий, найдем его конец
-			_, _, _ = skipLeadingBlockComment(lines, i)
-		}
+        // standalone comment block => indent with current depth, don't attach to next token
+        if commentOpenRe.MatchString(lines[i]) {
+            cEnd, remainder, ok := skipLeadingBlockComment(lines, i)
+            if ok && strings.TrimSpace(remainder) == "" {
+                indent := strings.Repeat(" ", depth*config.IndentSize)
+                for j := i; j <= cEnd && j < len(lines); j++ {
+                    lines[j] = indent + strings.TrimLeft(lines[j], " \t")
+                }
+                i = cEnd
+                continue
+            }
+        }
 
-		keyword, _, endLine, kind, found := getTokenAtLineStartSkippingLeadingComments(lines, i, config)
-		if !found {
-			continue
-		}
+        commentStart := i
+
+        keyword, _, endLine, kind, found := getTokenAtLineStartSkippingLeadingComments(lines, i, config)
+        if !found {
+            continue
+        }
 
 		// Check if we should skip indenting this simple function
 		if kind == tokSimple {
