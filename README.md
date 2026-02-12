@@ -95,13 +95,17 @@ spec:
 ## Installation
 
 ### One-click installation (Linux)
+
 ```bash
 curl -L https://github.com/digitalstudium/helmfmt/releases/latest/download/helmfmt_Linux_x86_64.tar.gz | sudo tar -xzf - -C /usr/local/bin/ helmfmt
 ```
+
 ### Other methods
+
 #### First method
 
 Download it from [releases](https://github.com/digitalstudium/helmfmt/releases) and put into `PATH` folder, e. g. for Linux:
+
 ```bash
 sudo install ./Downloads/helmfmt /usr/local/bin/
 ```
@@ -131,7 +135,6 @@ Then add it to `PATH` via:
 ```bash
 sudo install ./helmfmt /usr/local/bin/
 ```
-
 
 ---
 
@@ -268,19 +271,20 @@ helmfmt --enable-indent=tpl,toYaml <chart-path>
 
 ## pre-commit hook configuration
 
-https://github.com/pre-commit/pre-commit should be installed  first
+https://github.com/pre-commit/pre-commit should be installed first
 
 To use `helmfmt` as a pre-commit hook, add the following to your `.pre-commit-config.yaml`:
 
 ```yaml
 repos:
   - repo: https://github.com/digitalstudium/helmfmt
-    rev: v0.4.2
+    rev: v0.4.3
     hooks:
       - id: helmfmt
 ```
 
 ## Zed IDE configuration
+
 First, you should install:
 
 - helm language extension https://github.com/cabrinha/helm.zed
