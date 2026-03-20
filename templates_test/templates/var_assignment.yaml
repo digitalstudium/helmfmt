@@ -1,0 +1,8 @@
+{{- $value := "" }}
+{{- if .Values.option1 }}
+{{- $value = .Values.option1.value }}
+{{- else if .Values.option2 }}
+{{- $value = "some-value" }}
+{{- else }}
+{{- fail "Either option1.value must be set or option2 must be true" }}
+{{- end }}
