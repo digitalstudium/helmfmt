@@ -163,6 +163,35 @@ helmfmt --files ./mychart/templates/deployment.yaml ./mychart/templates/svc.yaml
 Processed: 2, Updated: 1, Errors: 0
 ```
 
+### CI / Check Mode
+
+Use `--check` to verify files are already formatted without modifying them.
+The command exits with code 1 if any files need formatting:
+
+```bash
+# Check a whole chart
+helmfmt --check ./mychart
+# Check specific files
+helmfmt --check --files templates/deployment.yaml templates/service.yaml
+# Pipe through stdin
+cat templates/deployment.yaml | helmfmt --check
+```
+
+Example CI output when files need formatting:
+
+```bash
+[UNFORMATTED] mychart/templates/deployment.yaml
+[UNFORMATTED] mychart/templates/ingress.yaml
+
+2 file(s) need formatting, 0 error(s)
+```
+
+Example CI output when everything is clean:
+
+```bash
+All 5 file(s) are properly formatted
+```
+
 ---
 
 ## Configuration
@@ -278,7 +307,7 @@ To use `helmfmt` as a pre-commit hook, add the following to your `.pre-commit-co
 ```yaml
 repos:
   - repo: https://github.com/digitalstudium/helmfmt
-    rev: v0.4.4
+    rev: v0.5.0
     hooks:
       - id: helmfmt
 ```

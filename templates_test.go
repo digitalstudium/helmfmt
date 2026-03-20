@@ -113,7 +113,10 @@ func TestFormatIndentationFromTemplates(t *testing.T) {
 						w.Close()
 					}()
 
-					processStdin(config)
+					// pass check=false and assert no error
+					if err := processStdin(config, false); err != nil {
+						t.Fatalf("processStdin failed: %v", err)
+					}
 
 					wOut.Close()
 					os.Stdin, os.Stdout = oldStdin, oldStdout
