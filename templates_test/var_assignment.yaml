@@ -1,4 +1,3 @@
-name: "Plain yaml"
+name: "Variable assignment indentation test"
 input_file: "templates/var_assignment.yaml"
 expected_file: "templates_expected/var_assignment.yaml"
-
