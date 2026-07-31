@@ -76,9 +76,14 @@ func formatIndentation(src string, config *Config, filePath string) string {
 		if commentOpenRe.MatchString(lines[i]) {
 			cEnd, remainder, ok := skipLeadingBlockComment(lines, i)
 			if ok && strings.TrimSpace(remainder) == "" {
-				indent := strings.Repeat(" ", depth*config.IndentSize)
-				for j := i; j <= cEnd && j < len(lines); j++ {
-					lines[j] = indent + strings.TrimLeft(lines[j], " \t")
+				newIndent := depth * config.IndentSize
+				// Reindent the opening line and shift the remaining lines by the same
+				// amount, preserving any relative indentation of the comment body
+				// (e.g. YAML examples inside the comment).
+				delta := newIndent - leadingWhitespace(lines[i])
+				lines[i] = strings.Repeat(" ", newIndent) + strings.TrimLeft(lines[i], " \t")
+				for j := i + 1; j <= cEnd && j < len(lines); j++ {
+					lines[j] = shiftIndent(lines[j], delta)
 				}
 				i = cEnd
 				continue
@@ -227,6 +232,29 @@ func parseTokenFromLine(lines []string, lineIdx int, line string, config *Config
 	}
 
 	return "", lineIdx, lineIdx, tokNone, false
+}
+
+// leadingWhitespace returns the number of leading space/tab characters.
+func leadingWhitespace(line string) int {
+	n := 0
+	for n < len(line) && (line[n] == ' ' || line[n] == '\t') {
+		n++
+	}
+	return n
+}
+
+// shiftIndent adjusts a line's leading indentation by delta columns (clamped at
+// zero) while keeping the rest of the line verbatim. Blank lines are untouched.
+func shiftIndent(line string, delta int) string {
+	if strings.TrimSpace(line) == "" {
+		return line
+	}
+	cur := leadingWhitespace(line)
+	width := cur + delta
+	if width < 0 {
+		width = 0
+	}
+	return strings.Repeat(" ", width) + line[cur:]
 }
 
 // Пропуск блочного комментария
