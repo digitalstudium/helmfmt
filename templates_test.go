@@ -113,8 +113,9 @@ func TestFormatIndentationFromTemplates(t *testing.T) {
 						w.Close()
 					}()
 
-					// pass check=false and assert no error
-					if err := processStdin(config, false); err != nil {
+					// pass check=false and assert no error; helmfile mode is
+					// selected the same way the CLI does, from the input extension
+					if err := processStdin(config, false, isHelmfile(testCase.InputFile)); err != nil {
 						t.Fatalf("processStdin failed: %v", err)
 					}
 

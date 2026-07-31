@@ -67,15 +67,40 @@ func helmFuncMap() template.FuncMap {
 	return f
 }
 
-// validateTemplateSyntax validates the given template source string using
-// Helm function set. Returns an error if the template has invalid syntax.
-func validateTemplateSyntax(src string) error {
+// helmfileFuncMap extends helmFuncMap with the template functions helmfile
+// registers on top of Helm/Sprig (env, requiredEnv, exec, readFile, ...). As
+// with helmFuncMap, only the presence of each name matters for parse-time
+// validation; the stubs are never executed. Names already provided by
+// Helm/sprig (get, tpl, required, ...) keep their existing registration.
+func helmfileFuncMap() template.FuncMap {
+	f := helmFuncMap()
+	// Helmfile-specific functions not in Helm/sprig
+	helmfileExtras := []string{
+		"env", "requiredEnv", "exec", "envExec",
+		"readFile", "readDir", "readDirEntries",
+		"getOrNil", "setValueAtPath",
+		"fetchSecretValue", "expandSecretRefs", "kustomizeBuild",
+	}
+	for _, name := range helmfileExtras {
+		f[name] = stub
+	}
+	return f
+}
 
-	// Get Helm's built-in function map
-	helmFuncMap := helmFuncMap()
+// validateTemplateSyntax validates the given template source string using the
+// Helm function set. When helmfile is true, helmfile's additional template
+// functions are also accepted. Returns an error if the template has invalid
+// syntax.
+func validateTemplateSyntax(src string, helmfile bool) error {
 
-	// Create and parse template with helm function map
-	_, err := template.New("validation").Funcs(helmFuncMap).Parse(src)
+	// Get the applicable function map
+	funcMap := helmFuncMap()
+	if helmfile {
+		funcMap = helmfileFuncMap()
+	}
+
+	// Create and parse template with the function map
+	_, err := template.New("validation").Funcs(funcMap).Parse(src)
 	if err != nil {
 		return fmt.Errorf("invalid template syntax: %w", err)
 	}

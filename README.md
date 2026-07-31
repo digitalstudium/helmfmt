@@ -225,6 +225,26 @@ docker run --rm -v "$PWD:/work" ghcr.io/digitalstudium/helmfmt:latest \
   --files templates/deployment.yaml templates/service.yaml
 ```
 
+### Helmfile templates
+
+[Helmfile](https://helmfile.readthedocs.io/) value files use extra template
+functions on top of Helm/Sprig (`env`, `requiredEnv`, `exec`, `readFile`,
+`fetchSecretValue`, ...). By default `helmfmt` validates against Helm's function
+set, so these would be reported as `function "env" not defined`.
+
+Helmfile mode accepts those functions. It is enabled automatically for files
+with a `.gotmpl` extension (e.g. `helmfile.yaml.gotmpl`,
+`values/demo.yaml.gotmpl`), and can be forced with `--helmfile` (required for
+stdin, which has no filename):
+
+```bash
+# Auto-detected via the .gotmpl extension
+helmfmt --check --files helmfile.yaml.gotmpl values/demo.yaml.gotmpl
+# Force helmfile mode for any file or for stdin
+helmfmt --helmfile --files values/demo.yaml
+cat values/demo.yaml | helmfmt --helmfile --check
+```
+
 ---
 
 ## Configuration
@@ -239,7 +259,7 @@ docker run --rm -v "$PWD:/work" ghcr.io/digitalstudium/helmfmt:latest \
 ```json
 {
   "indent_size": 2,
-  "extensions": [".yaml", ".yml", ".tpl"],
+  "extensions": [".yaml", ".yml", ".tpl", ".gotmpl"],
   "rules": {
     "indent": {
       "tpl": {
