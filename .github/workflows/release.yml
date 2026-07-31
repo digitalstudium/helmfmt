@@ -11,6 +11,7 @@ on:
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
   # Test and build snapshot for PRs
@@ -43,6 +44,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GORELEASER_CURRENT_TAG: ${{ steps.version.outputs.version }}
+
+      - name: Build Docker image (validate, no push)
+        run: |
+          docker build \
+            --build-arg VERSION=${{ steps.version.outputs.version }} \
+            -t helmfmt:${{ steps.version.outputs.version }} \
+            .
 
   # Create tag and release when PR is merged to main
   release:
@@ -85,3 +93,42 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GORELEASER_CURRENT_TAG: ${{ steps.version.outputs.version }}
+
+      - name: Set up QEMU
+        if: steps.version.outputs.skip != 'true'
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        if: steps.version.outputs.skip != 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        if: steps.version.outputs.skip != 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        if: steps.version.outputs.skip != 'true'
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/helmfmt
+          tags: |
+            type=semver,pattern={{version}},value=${{ steps.version.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.version.outputs.version }}
+            type=raw,value=latest
+
+      - name: Build and push Docker image
+        if: steps.version.outputs.skip != 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VERSION=${{ steps.version.outputs.version }}
