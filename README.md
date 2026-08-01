@@ -127,6 +127,7 @@ echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.bashrc && source ~/.bashrc
 ```bash
 git clone https://github.com/digitalstudium/helmfmt
 cd helmfmt
+go generate ./...
 go build
 ```
 
