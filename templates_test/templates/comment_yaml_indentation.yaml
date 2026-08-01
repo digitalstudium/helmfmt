@@ -1,0 +1,8 @@
+{{- if .Values.enabled }}
+{{/*
+Example values:
+- name: istio-system
+  podSecurity:
+    enforce: baseline
+*/}}
+{{- end }}

@@ -1,0 +1,3 @@
+name: "Comment block preserves internal YAML indentation (issue #17)"
+input_file: "templates/comment_yaml_indentation.yaml"
+expected_file: "templates_expected/comment_yaml_indentation.yaml"
