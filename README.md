@@ -136,6 +136,34 @@ Then add it to `PATH` via:
 sudo install ./helmfmt /usr/local/bin/
 ```
 
+### Docker
+
+A container image is published to the GitHub Container Registry on every release:
+
+```bash
+docker pull ghcr.io/digitalstudium/helmfmt:latest
+```
+
+Mount your chart into the container's working directory (`/work`) and pass paths relative to it:
+
+```bash
+# Format a whole chart in place
+docker run --rm -v "$PWD:/work" ghcr.io/digitalstudium/helmfmt:latest ./mychart
+
+# Check formatting in CI (exits non-zero if unformatted)
+docker run --rm -v "$PWD:/work" ghcr.io/digitalstudium/helmfmt:latest --check ./mychart
+
+# Format specific files
+docker run --rm -v "$PWD:/work" ghcr.io/digitalstudium/helmfmt:latest \
+  --files templates/deployment.yaml templates/service.yaml
+```
+
+Images are built for both `linux/amd64` and `linux/arm64`. You can also build it yourself:
+
+```bash
+docker build -t helmfmt .
+```
+
 ---
 
 ## Usage
