@@ -7,9 +7,7 @@ import (
 	"strings"
 	"text/template"
 
-	_ "unsafe"
-
-	_ "helm.sh/helm/v3/pkg/engine" // Import to work with Helm's private functions (via go linkname)
+	"github.com/Masterminds/sprig/v3"
 )
 
 // Типы токенов для ясности, что мы нашли
@@ -42,8 +40,37 @@ var (
 	firstWordRe = regexp.MustCompile(`^\s*(\w+)`)
 )
 
-//go:linkname helmFuncMap helm.sh/helm/v3/pkg/engine.funcMap
-func helmFuncMap() template.FuncMap
+// helmFuncMap mirrors the function set registered by Helm's template engine
+// (helm.sh/helm/v3/pkg/engine.funcMap): Sprig's text function map, minus the
+// env/expandenv functions Helm removes, plus Helm's own additions. Only the
+// presence of each name matters for parse-time syntax validation, so the
+// non-Sprig additions are no-op placeholders that are never executed.
+func helmFuncMap() template.FuncMap {
+	f := sprig.TxtFuncMap()
+	delete(f, "env")
+	delete(f, "expandenv")
+
+	extra := template.FuncMap{
+		"toToml":        func(interface{}) string { return "" },
+		"fromToml":      func(string) map[string]interface{} { return nil },
+		"toYaml":        func(interface{}) string { return "" },
+		"toYamlPretty":  func(interface{}) string { return "" },
+		"fromYaml":      func(string) map[string]interface{} { return nil },
+		"fromYamlArray": func(string) []interface{} { return nil },
+		"toJson":        func(interface{}) string { return "" },
+		"fromJson":      func(string) map[string]interface{} { return nil },
+		"fromJsonArray": func(string) []interface{} { return nil },
+		"include":       func(string, interface{}) string { return "" },
+		"tpl":           func(string, interface{}) interface{} { return nil },
+		"required":      func(string, interface{}) (interface{}, error) { return nil, nil },
+		"lookup":        func(string, string, string, string) (map[string]interface{}, error) { return nil, nil },
+	}
+	for k, v := range extra {
+		f[k] = v
+	}
+
+	return f
+}
 
 // validateTemplateSyntax validates the given template source string using
 // Helm function set. Returns an error if the template has invalid syntax.
