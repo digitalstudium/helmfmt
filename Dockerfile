@@ -6,7 +6,8 @@ RUN go mod download
 
 COPY . .
 ARG VERSION=dev
-RUN CGO_ENABLED=0 go build -ldflags "-s -w -X main.Version=${VERSION}" -o /helmfmt .
+RUN go generate ./...
+RUN CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -X main.Version=${VERSION}" -o /helmfmt .
 
 FROM scratch
 COPY --from=build /helmfmt /usr/local/bin/helmfmt

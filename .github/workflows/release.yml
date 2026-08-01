@@ -27,6 +27,9 @@ jobs:
         with:
           go-version: "1.25"
 
+      - name: Regenerate stubs
+        run: go generate ./...
+
       - name: Run tests
         run: go test -v ./...
 
@@ -64,6 +67,9 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version: "1.25"
+
+      - name: Regenerate stubs
+        run: go generate ./...
 
       - name: Read version and create tag
         id: version

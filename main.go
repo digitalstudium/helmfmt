@@ -1,3 +1,6 @@
+// Package main implements helmfmt.
+//
+//go:generate go run gen_stubs.go
 package main
 
 import (
