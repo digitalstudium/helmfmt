@@ -79,7 +79,7 @@ func main() {
 
 func run() int {
 	config := loadConfig()
-	var stdout, files, check, helmfile bool
+	var stdout, files, check bool
 	var disableRules, enableRules []string
 
 	var rootCmd = &cobra.Command{
@@ -121,12 +121,12 @@ func run() int {
 				if len(args) == 0 {
 					// --files with no args means read filenames from stdin (pre-commit style)
 					if stdinPiped {
-						return processFilesFromStdin(config, stdout, check, helmfile)
+						return processFilesFromStdin(config, stdout, check)
 					}
 					return fmt.Errorf("--files requires at least one file argument")
 				}
 				// --files with args means process those files
-				exitCode := process(args, stdout, check, helmfile, config)
+				exitCode := process(args, stdout, check, config)
 				if exitCode != 0 {
 					os.Exit(exitCode)
 				}
@@ -135,7 +135,7 @@ func run() int {
 
 			// If stdin is piped and no --files flag, process stdin as content
 			if stdinPiped && len(args) == 0 {
-				return processStdin(config, check, helmfile)
+				return processStdin(config, check)
 			}
 
 			// Chart mode
@@ -152,7 +152,7 @@ func run() int {
 			if err != nil {
 				return err
 			}
-			exitCode := process(chartFiles, false, check, helmfile, config)
+			exitCode := process(chartFiles, false, check, config)
 			if exitCode != 0 {
 				os.Exit(exitCode)
 			}
@@ -163,7 +163,6 @@ func run() int {
 	rootCmd.Flags().BoolVar(&files, "files", false, "Process specific files")
 	rootCmd.Flags().BoolVar(&stdout, "stdout", false, "Output to stdout")
 	rootCmd.Flags().BoolVar(&check, "check", false, "Check formatting without modifying files (exit 1 if unformatted)")
-	rootCmd.Flags().BoolVar(&helmfile, "helmfile", false, "Accept helmfile template functions (env, requiredEnv, exec, ...); auto-enabled for .gotmpl files")
 	rootCmd.Flags().StringSliceVar(&disableRules, "disable-indent", []string{}, "Disable specific indent rules (e.g., --disable-indent=printf,include)")
 	rootCmd.Flags().StringSliceVar(&enableRules, "enable-indent", []string{}, "Enable specific indent rules (e.g., --enable-indent=printf,include)")
 
@@ -174,7 +173,7 @@ func run() int {
 	return 0
 }
 
-func processFilesFromStdin(config *Config, stdout bool, check bool, helmfile bool) error {
+func processFilesFromStdin(config *Config, stdout bool, check bool) error {
 	// Read filenames from stdin (one per line)
 	input, err := io.ReadAll(os.Stdin)
 	if err != nil {
@@ -194,14 +193,14 @@ func processFilesFromStdin(config *Config, stdout bool, check bool, helmfile boo
 		return fmt.Errorf("no files provided via stdin")
 	}
 
-	exitCode := process(filenames, stdout, check, helmfile, config)
+	exitCode := process(filenames, stdout, check, config)
 	if exitCode != 0 {
 		os.Exit(exitCode)
 	}
 	return nil
 }
 
-func processStdin(config *Config, check bool, helmfile bool) error {
+func processStdin(config *Config, check bool) error {
 	// Read all input from stdin
 	input, err := io.ReadAll(os.Stdin)
 	if err != nil {
@@ -211,7 +210,7 @@ func processStdin(config *Config, check bool, helmfile bool) error {
 	orig := string(input)
 
 	// Validate syntax
-	if err := validateTemplateSyntax(orig, helmfile); err != nil {
+	if err := validateTemplateSyntax(orig); err != nil {
 		return fmt.Errorf("invalid syntax: %w", err)
 	}
 
@@ -247,7 +246,7 @@ func collectFiles(root string, config *Config) ([]string, error) {
 	return out, err
 }
 
-func process(files []string, stdout bool, check bool, helmfile bool, config *Config) int {
+func process(files []string, stdout bool, check bool, config *Config) int {
 	var total, updated, failed, unformatted int
 
 	for _, file := range files {
@@ -261,7 +260,7 @@ func process(files []string, stdout bool, check bool, helmfile bool, config *Con
 		}
 		orig := string(b)
 
-		if err := validateTemplateSyntax(orig, helmfile || isHelmfile(file)); err != nil {
+		if err := validateTemplateSyntax(orig); err != nil {
 			fmt.Fprintf(os.Stderr, "[ERROR]  Invalid syntax %s: %v\n", file, err)
 			failed++
 			continue
@@ -319,13 +318,6 @@ func process(files []string, stdout bool, check bool, helmfile bool, config *Con
 		return 1
 	}
 	return 0
-}
-
-// isHelmfile reports whether a path should be validated with helmfile's
-// template functions, based on the .gotmpl extension (covers values.yaml.gotmpl,
-// helmfile.yaml.gotmpl, etc.).
-func isHelmfile(path string) bool {
-	return strings.EqualFold(filepath.Ext(path), ".gotmpl")
 }
 
 func wanted(path string, config *Config) bool {
