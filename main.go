@@ -37,7 +37,7 @@ func loadConfig() *Config {
 	// Default config
 	config := &Config{
 		IndentSize: 2,
-		Extensions: []string{".yaml", ".yml", ".tpl"},
+		Extensions: []string{".yaml", ".yml", ".tpl", ".gotmpl"},
 		Rules: RulesConfig{
 			Indent: map[string]RuleConfig{
 				"tpl":      {Disabled: true, Exclude: []string{}},

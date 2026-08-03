@@ -1,0 +1,7 @@
+{{- if env "FEATURE_ENABLED" }}
+{{ range $name := .Values.releases }}
+{{- $token := requiredEnv "GITHUB_TOKEN" }}
+name: {{ $name }}
+registry: {{ env "REGISTRY" | default "private.azurecr.io" }}
+{{- end }}
+{{- end }}
