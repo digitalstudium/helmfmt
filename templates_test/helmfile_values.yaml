@@ -1,0 +1,3 @@
+name: "Helmfile .gotmpl values with env/requiredEnv/isFile/isDir/sprigGet"
+input_file: "templates/helmfile_values.yaml.gotmpl"
+expected_file: "templates_expected/helmfile_values.yaml.gotmpl"

@@ -1,0 +1,11 @@
+{{- if env "FEATURE_ENABLED" }}
+{{- if isFile "values.yaml" }}
+source: {{ if isDir "charts" }}local{{ else }}remote{{ end }}
+token: {{ sprigGet "GITHUB_TOKEN" .Values }}
+{{- end }}
+{{ range $name := .Values.releases }}
+{{- $token := requiredEnv "GITHUB_TOKEN" }}
+name: {{ $name }}
+registry: {{ env "REGISTRY" | default "private.azurecr.io" }}
+{{- end }}
+{{- end }}

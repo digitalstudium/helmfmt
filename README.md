@@ -225,6 +225,19 @@ docker run --rm -v "$PWD:/work" ghcr.io/digitalstudium/helmfmt:latest \
   --files templates/deployment.yaml templates/service.yaml
 ```
 
+### Helmfile templates
+
+[Helmfile](https://helmfile.readthedocs.io/) value files use extra template
+functions on top of Helm/Sprig (`env`, `requiredEnv`, `exec`, `readFile`,
+`fetchSecretValue`, ...). `helmfmt` accepts these functions as well, so it also
+formats helmfile files. The `.gotmpl` extension (e.g. `helmfile.yaml.gotmpl`,
+`values/demo.yaml.gotmpl`) is included by default:
+
+```bash
+helmfmt --check --files helmfile.yaml.gotmpl values/demo.yaml.gotmpl
+cat values/demo.yaml | helmfmt --check
+```
+
 ---
 
 ## Configuration
@@ -239,7 +252,7 @@ docker run --rm -v "$PWD:/work" ghcr.io/digitalstudium/helmfmt:latest \
 ```json
 {
   "indent_size": 2,
-  "extensions": [".yaml", ".yml", ".tpl"],
+  "extensions": [".yaml", ".yml", ".tpl", ".gotmpl"],
   "rules": {
     "indent": {
       "tpl": {
